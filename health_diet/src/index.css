@@ -42,8 +42,6 @@ body {
 
 /* Firefox Scrollbar (limited support) */
 
-
-
 * {
   scrollbar-width: thin;
   scrollbar-color: #888 #f1f1f1;

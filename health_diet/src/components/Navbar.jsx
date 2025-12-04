@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import styled from 'styled-components'
+import React, { useState } from 'react';
+import styled from 'styled-components';
 import { Link as LinkR, NavLink as RouterNavLink } from 'react-router-dom';
 import LogoImg from '../../public/images/my_healthy_plate_inarticle_400.jpg';
 import { MenuRounded, Close } from '@mui/icons-material';
@@ -17,7 +17,6 @@ const Nav = styled.nav`
   padding: 0 24px;
   box-shadow: ${({ theme }) => theme.shadow};
   border-bottom: 1px solid ${({ theme }) => theme.border_secondary};
-  width: 100%;
 `;
 
 const LeftGroup = styled.div`
@@ -60,7 +59,8 @@ const Logo = styled.img`
 const MobileIcon = styled.div`
   display: none;
   cursor: pointer;
-  @media screen and (max-width: 768px) {
+
+  @media screen and (max-width: 920px) {
     display: ${({ isOpen }) => (isOpen ? 'none' : 'flex')};
     align-items: center;
     justify-content: center;
@@ -74,14 +74,16 @@ const SideDrawer = styled.div`
   left: ${({ isOpen }) => (isOpen ? '0' : '-100%')};
   width: 260px;
   height: calc(100vh - 80px);
-  background-color: ${({ theme }) => theme.nav_bg + 'F2'};
-  box-shadow: ${({ theme }) => theme.shadow};
+  background-color: ${({ theme }) => theme.text_secondary};
+  opacity: 1;
+  box-shadow: ${({ theme }) => theme.shadow + '80'};
   display: flex;
   flex-direction: column;
   padding: 24px;
   transition: left 0.3s ease-in-out;
   z-index: 999;
-  @media screen and (min-width: 769px) {
+
+  @media screen and (min-width: 921px) {
     display: none;
   }
 `;
@@ -121,7 +123,8 @@ const NavMenu = styled.ul`
   align-items: center;
   gap: 32px;
   list-style: none;
-  @media screen and (max-width: 768px) {
+
+  @media screen and (max-width: 920px) {
     display: none;
   }
 `;
@@ -130,10 +133,12 @@ const UserContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  @media screen and (max-width: 768px) {
+  
+  @media screen and (max-width: 920px) {
     position: absolute;
     top: 20px;
     right: 24px;
+
     // Hide logout on small screens
     .logout-btn {
       display: none;
@@ -161,13 +166,14 @@ const TextButton = styled.div`
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  
   &:hover {
     background-color: ${({ theme }) => theme.primary};
     color: ${({ theme }) => theme.white};
   }
 
    &.mobile-logout {
-    @media screen and (min-width: 769px) {
+    @media screen and (min-width: 921px) {
       display: none;
     }
   }
@@ -193,7 +199,7 @@ function Navbar() {
           <NavItem to="/workouts">Workouts</NavItem>
           <NavItem to="/tutorials">Tutorials</NavItem>
           <NavItem to="/meals">Meals</NavItem>
-          <NavItem to="/progress">Blogs</NavItem>
+          <NavItem to="/blogs">Blogs</NavItem>
           <NavItem to="/contact">Contact Us</NavItem>
         </NavMenu>
         <UserContainer>

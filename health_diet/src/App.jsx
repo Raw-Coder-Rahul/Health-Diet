@@ -6,11 +6,15 @@ import { useState } from 'react';
 import Navbar from './components/Navbar';
 import Dashboard from "./pages/Dashboard";
 import Workouts from "./pages/Workouts";
+import Tutorials from "./pages/Tutorials";
+import Meals from "./pages/Meals";
+import Blogs from "./pages/Blogs";
+import Contact from "./pages/Contact";
 
 
 const Container = styled.div`
   width: 100%;
-  max-width: 1500px;
+  max-width: 1900px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -33,6 +37,10 @@ function App() {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/workouts" element={<Workouts />} />
+                <Route path="/tutorials" element={<Tutorials />} />
+                <Route path="/meals" element={<Meals />} />
+                <Route path="/blogs" element={<Blogs />} />
+                <Route path="/contact" element={<Contact />} />
               </Routes>
             </Container>
           ) : (
