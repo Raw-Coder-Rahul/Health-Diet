@@ -217,7 +217,7 @@ function Navbar() {
           <NavItem to="/workouts" onClick={() => setIsOpen(false)}>Workouts</NavItem>
           <NavItem to="/tutorials" onClick={() => setIsOpen(false)}>Tutorials</NavItem>
           <NavItem to="/meals" onClick={() => setIsOpen(false)}>Meals</NavItem>
-          <NavItem to="/progress" onClick={() => setIsOpen(false)}>Blogs</NavItem>
+          <NavItem to="/blogs" onClick={() => setIsOpen(false)}>Blogs</NavItem>
           <NavItem to="/contact" onClick={() => setIsOpen(false)}>Contact Us</NavItem>
           {/* Show logout only on small screens */}
           <TextButton className="mobile-logout" onClick={() => setIsOpen(false)}>Logout</TextButton>
