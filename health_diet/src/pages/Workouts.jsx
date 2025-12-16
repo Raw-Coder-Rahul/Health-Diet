@@ -30,6 +30,7 @@ const Left = styled.div`
   flex: 0.2;
   height: fit-content;
   padding: 18px;
+  color: ${({ theme }) => theme.text_primary};
   border: 1px solid ${({ theme }) => theme.text_primary + 20};
   border-radius: 14px;
   box-shadow: 1px 6px 20px 0px ${({ theme }) => theme.shadow};
