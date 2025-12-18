@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import WorkoutCard from '../components/cards/WorkoutCard';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+import dayjs from 'dayjs';
+import axios from 'axios';
 
 const Container = styled.div`
   flex: 1;
@@ -78,22 +80,39 @@ const SecTitle = styled.div`
 `;
 
 const Workouts = () => {
+  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [workouts, setWorkouts] = useState([]);
+
+  useEffect(() => {
+    const fetchWorkouts = async () => {
+      try {
+        const res = await axios.get(`/api/workouts/date?date=${selectedDate.toISOString()}`);
+        setWorkouts(res.data.todayWorkouts || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchWorkouts();
+  }, [selectedDate]);
+
   return (
     <Container>
       <Wrapper>
         <Left>
           <Title>Select Date</Title>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DateCalendar />
+            <DateCalendar value={selectedDate} onChange={(newDate) => setSelectedDate(newDate)} />
           </LocalizationProvider>
         </Left>
         <Right>
           <Section>
-            <SecTitle>Today's Workout</SecTitle>
+            <SecTitle>{selectedDate.format('DD MMM YYYY')} Workouts</SecTitle>
             <CardWrapper>
-              {[...Array(4)].map((_, i) => (
-                <WorkoutCard key={i} />
-              ))}
+              {workouts.length > 0 ? (
+                workouts.map((w, i) => <WorkoutCard key={i} workout={w} />)
+              ) : (
+                <p>No workouts found</p>
+              )}
             </CardWrapper>
           </Section>
         </Right>

@@ -8,15 +8,20 @@ export const verifyToken = (req, res, next) => {
     return next(createError(401, 'Access denied. No token provided.'));
   }
 
-  const token = authHeader.split(' ')[1]; 
-
-  if (!token) {
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Bearer') {
     return next(createError(401, 'Access denied. Invalid token format.'));
   }
 
+  const token = parts[1];
+
   try {
+    if (!process.env.JWT_SECRET) {
+      return next(createError(500, 'JWT_SECRET is not defined'));
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; 
+    req.user = decoded;
     next();
   } catch (err) {
     return next(createError(403, 'Invalid or expired token.'));

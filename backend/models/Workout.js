@@ -1,11 +1,10 @@
-// backend/models/Workout.js
 import mongoose from 'mongoose';
 
 const WorkoutSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     category: { type: String, required: true },
-    name: { type: String, required: true, unique: true },
+    workoutName: { type: String, required: true }, // clearer than "name"
     sets: { type: Number },
     reps: { type: Number },
     weight: { type: Number },
@@ -18,4 +17,4 @@ const WorkoutSchema = new mongoose.Schema(
 
 const Workout = mongoose.model('Workout', WorkoutSchema);
 
-export default Workout;   // <-- ESM default export
+export default Workout;

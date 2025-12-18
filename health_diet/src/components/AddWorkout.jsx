@@ -4,6 +4,7 @@ import TextInput from './TextInput';
 import Button from './Button';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
 
 const Card = styled.div`
   flex: 1;
@@ -16,6 +17,7 @@ const Card = styled.div`
   box-shadow: 1px 6px 20px 0px ${({ theme }) => theme.shadow + 15};
   flex-direction: column;
 `;
+
 const Title = styled.div`
   font-size: 18px;
   font-weight: 600;
@@ -24,7 +26,18 @@ const Title = styled.div`
     font-size: 14px;
   }
 `;
-const AddWorkout = ({workout, setWorkout}) => {
+
+const AddWorkout = ({ workout, setWorkout }) => {
+  const handleAddWorkout = async () => {
+    try {
+      const res = await axios.post('/api/workouts/add', { workoutString: workout });
+      toast.success('Workout Added!');
+      setWorkout(""); // clear input
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error adding workout');
+    }
+  };
+
   return (
     <Card>
       <Title>Add New Workout</Title>
@@ -32,36 +45,20 @@ const AddWorkout = ({workout, setWorkout}) => {
         label="Workout"
         textArea
         rows={10}
-        placeholder={`Enter workout details. In this format:
+        placeholder={`Enter workout details. Format:
 #Category
-- WorkOut Name
-- Duration
-- Sets
-- Reps
-- Weight`}
+Workout Name
+Duration (min)
+Sets
+Reps
+Weight (kg)`}
         value={workout}
         handleChange={(e) => setWorkout(e.target.value)}
       />
-      <Button
-        primary
-        onClick={() => toast.success('Workout Added!')}
-        text="Add Workout"
-        small
-      />
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-      />
+      <Button primary onClick={handleAddWorkout} text="Add Workout" small />
+      <ToastContainer position="top-center" autoClose={3000} theme="colored" />
     </Card>
-  )
-}
+  );
+};
 
 export default AddWorkout;
