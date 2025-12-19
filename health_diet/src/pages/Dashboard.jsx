@@ -9,6 +9,7 @@ import WorkoutCard from '../components/cards/WorkoutCard';
 import AddMeal from '../components/AddMeal';
 import MealCard from '../components/cards/MealCard';
 import NutrientChartCard from '../components/cards/NutrientChartCard';
+import SignUp from '../components/SignUp';
 
 const Container = styled.div`
   flex: 1;

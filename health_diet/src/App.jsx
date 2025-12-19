@@ -2,7 +2,7 @@ import styled, { ThemeProvider } from 'styled-components';
 import { lightTheme } from './utills/Themes';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Authentication from './pages/Authentication';
-import { useState } from 'react';
+import { useSelector } from 'react-redux';
 import Navbar from './components/Navbar';
 import Dashboard from "./pages/Dashboard";
 import Workouts from "./pages/Workouts";
@@ -10,7 +10,6 @@ import Tutorials from "./pages/Tutorials";
 import Meals from "./pages/Meals";
 import Blogs from "./pages/Blogs";
 import Contact from "./pages/Contact";
-
 
 const Container = styled.div`
   width: 100%;
@@ -26,14 +25,14 @@ const Container = styled.div`
 `;
 
 function App() {
-  const [user, setUser] = useState(true);
+  const { currentUser } = useSelector((state) => state.user);
   return (
-     <div className="App">
-      <ThemeProvider theme={lightTheme}>
-        <BrowserRouter>
-          {user ? (
-            <Container>
-              <Navbar />
+    <ThemeProvider theme={lightTheme}>
+      <BrowserRouter>
+        <Container>
+          {currentUser ? (
+            <>
+              <Navbar currentUser={currentUser} />
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/workouts" element={<Workouts />} />
@@ -41,17 +40,16 @@ function App() {
                 <Route path="/meals" element={<Meals />} />
                 <Route path="/blogs" element={<Blogs />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="*" element={<Dashboard />} />
               </Routes>
-            </Container>
+            </>
           ) : (
-          <Container>
             <Authentication />
-          </Container>
-        )}
-        </BrowserRouter>
-      </ThemeProvider>
-    </div>
-  )
-};
+          )}
+        </Container>
+      </BrowserRouter>
+    </ThemeProvider>
+  );
+}
 
 export default App;

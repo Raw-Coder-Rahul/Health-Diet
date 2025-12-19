@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import { Link as LinkR, NavLink as RouterNavLink } from 'react-router-dom';
 import LogoImg from '../../public/images/my_healthy_plate_inarticle_400.jpg';
 import { MenuRounded, Close } from '@mui/icons-material';
+import { useDispatch } from 'react-redux';
+import { logout } from "../redux/reducers/userSlice";
 
 const Nav = styled.nav`
   background-color: ${({ theme }) => theme.nav_bg};
@@ -146,15 +148,11 @@ const UserContainer = styled.div`
   }
 `;
 
-const Avatar = styled.div`
+const Avatar = styled.img`
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  // background-color: ${({ theme }) => theme.primary};
-  background-image: url(${LogoImg});
-  background-size: cover;
-  background-position: center;
-
+  object-fit: cover;
 `;
 
 const TextButton = styled.div`
@@ -179,35 +177,66 @@ const TextButton = styled.div`
   }
 `;
 
-function Navbar() {
-    const [isOpen, setIsOpen] = useState(false);
+function Navbar({ currentUser }) {
+  const dispatch = useDispatch();
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <>
       <Nav>
         <LeftGroup>
-          <MobileIcon isOpen={isOpen} onClick={() => setIsOpen(true)}>
+          <MobileIcon onClick={() => setIsOpen(true)}>
             <MenuRounded fontSize="large" />
           </MobileIcon>
 
-          <NavLogo to="/" drawerOpen={isOpen}>
+          <NavLogo to="/">
             <Logo src={LogoImg} alt="Logo" />
             HealthDiet
           </NavLogo>
         </LeftGroup>
+
         <NavMenu>
-          <NavItem to="/" exact="true">Dashboard</NavItem>
+          <NavItem to="/" end>Dashboard</NavItem>
           <NavItem to="/workouts">Workouts</NavItem>
           <NavItem to="/tutorials">Tutorials</NavItem>
           <NavItem to="/meals">Meals</NavItem>
           <NavItem to="/blogs">Blogs</NavItem>
           <NavItem to="/contact">Contact Us</NavItem>
         </NavMenu>
+
         <UserContainer>
-          <Avatar />
-          <TextButton className="logout-btn">Logout</TextButton>
+          {currentUser ? (
+            <>
+              {currentUser.profileImageUrl ? (
+                <Avatar src={currentUser.profileImageUrl} alt="User avatar" />
+                ) : (
+                <Avatar
+                  as="div"
+                  style={{
+                    backgroundColor: "#6366f1",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#fff",
+                    fontWeight: "600",
+                  }}
+                >
+                {currentUser.fullName?.[0]?.toUpperCase() || "?"}
+                </Avatar>
+              )}
+              <TextButton
+                className="logout-btn"
+                onClick={() => dispatch(logout())}
+              >
+              Logout
+            </TextButton>
+          </>
+        ) : (
+          <Avatar src={LogoImg} alt="Default avatar" />
+        )}
         </UserContainer>
       </Nav>
-      
+
       <SideDrawer isOpen={isOpen}>
         <CloseIcon onClick={() => setIsOpen(false)}>
           <Close />
@@ -219,8 +248,9 @@ function Navbar() {
           <NavItem to="/meals" onClick={() => setIsOpen(false)}>Meals</NavItem>
           <NavItem to="/blogs" onClick={() => setIsOpen(false)}>Blogs</NavItem>
           <NavItem to="/contact" onClick={() => setIsOpen(false)}>Contact Us</NavItem>
-          {/* Show logout only on small screens */}
-          <TextButton className="mobile-logout" onClick={() => setIsOpen(false)}>Logout</TextButton>
+          <TextButton className="mobile-logout" onClick={() => { dispatch(logout()); setIsOpen(false); }}>
+            Logout
+          </TextButton>
         </DrawerLinks>
         <SidebarLogo to="/">
           <Logo src={LogoImg} alt="Fitness Diet Logo" />
@@ -228,6 +258,7 @@ function Navbar() {
         </SidebarLogo>
       </SideDrawer>
     </>
-  )
+  );
 }
+
 export default Navbar;

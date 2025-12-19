@@ -32,7 +32,7 @@ const AddWorkout = ({ workout, setWorkout }) => {
     try {
       const res = await axios.post('/api/workouts/add', { workoutString: workout });
       toast.success('Workout Added!');
-      setWorkout(""); // clear input
+      setWorkout("");
     } catch (err) {
       toast.error(err.response?.data?.message || 'Error adding workout');
     }

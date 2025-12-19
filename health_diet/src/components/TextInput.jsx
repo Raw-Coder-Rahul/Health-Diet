@@ -1,64 +1,71 @@
-// TextInput.jsx
 import React from 'react';
 import styled from 'styled-components';
 
 const InputContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 `;
 
 const Label = styled.label`
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: ${({ theme }) => theme.text_primary};
-  background-color: linear-gradient(90deg, transparent, transparent 50%, ${({ theme }) => theme.background} 50%);
 `;
 
 const BaseInput = styled.input`
-  padding: 14px 18px;
-  font-size: 15px;
+  padding: 12px 14px;
+  font-size: 14px;
   border: 1px solid ${({ theme }) => theme.border || '#d1d5db'};
-  border-radius: 10px;
-  background-color: ${({ theme }) => theme.input_background || '#f3f4f6'};
+  border-radius: 8px;
+  background-color: ${({ theme }) => theme.input_background || '#f9fafb'};
   color: ${({ theme }) => theme.text_primary};
-  transition: border-color 0.3s ease, background-color 0.3s ease;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.primary || '#6366f1'};
+  }
 
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.primary || '#6366f1'};
     background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
   }
+
   &::placeholder {
     color: ${({ theme }) => theme.text_secondary || '#9ca3af'};
   }
 `;
 
 const TextArea = styled.textarea`
-  padding: 14px 18px;
-  font-size: 15px;
+  padding: 12px 14px;
+  font-size: 14px;
   border: 1px solid ${({ theme }) => theme.border || '#d1d5db'};
-  border-radius: 10px;
-  background-color: ${({ theme }) => theme.input_background || '#f3f4f6'};
+  border-radius: 8px;
+  background-color: ${({ theme }) => theme.input_background || '#f9fafb'};
   color: ${({ theme }) => theme.text_primary};
-  transition: border-color 0.3s ease, background-color 0.3s ease;
+  transition: all 0.2s ease;
   resize: vertical;
-  white-space: pre-wrap;
-  overflow-y: auto;
-  min-height: 240px;
+  min-height: 120px;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.primary || '#6366f1'};
+  }
 
   &:focus {
     outline: none;
     border-color: ${({ theme }) => theme.primary || '#6366f1'};
     background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
   }
+
   &::placeholder {
     color: ${({ theme }) => theme.text_secondary || '#9ca3af'};
-    white-space: pre-wrap;
   }
 `;
 
-function TextInput({ label, placeholder, type = 'text', value, onChange, textArea = false, rows = 6 }) {
+function TextInput({ label, placeholder, type = 'text', value, onChange, textArea = false, rows = 6, name }) {
   return (
     <InputContainer>
       <Label>{label}</Label>
@@ -68,16 +75,19 @@ function TextInput({ label, placeholder, type = 'text', value, onChange, textAre
           placeholder={placeholder}
           value={value}
           onChange={onChange}
+          name={name}
         />
       ) : (
         <BaseInput
           type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-      />
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          name={name}
+        />
       )}
     </InputContainer>
   );
 }
+
 export default TextInput;

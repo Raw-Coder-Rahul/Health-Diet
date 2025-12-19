@@ -1,31 +1,90 @@
-// Example: SignUp.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
 import TextInput from './TextInput';
 import Button from './Button';
 
+const Wrapper = styled.div`
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: ${({ theme }) => theme.page_background || '#f3f4f6'};
+  overflow-y: auto; 
+`;
+
 const Container = styled.div`
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  margin: 0 auto;
+  padding: 40px;
+  border-radius: 16px;
+  background: ${({ theme }) => theme.card_background || '#fff'};
+  box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+
+  @media screen and (max-width: 600px) {
+    padding: 24px;
+    gap: 18px;
+    max-width: 95%;
+  }
 `;
 
-const Title = styled.div`
-  font-size: 30px;
-  font-weight: 800;
+const Title = styled.h2`
+  font-size: 32px; 
+  font-weight: 700;
   color: ${({ theme }) => theme.text_primary};
   text-align: center;
+  margin-bottom: 10px;
+
+  @media screen and (max-width: 600px) {
+    font-size: 24px;
+  }
 `;
 
-const Span = styled.div`
+const Span = styled.p`
   font-size: 16px;
   font-weight: 400;
   color: ${({ theme }) => theme.text_secondary};
   text-align: center;
+  margin-bottom: 24px;
+
+  @media screen and (max-width: 600px) {
+    font-size: 14px;
+    margin-bottom: 18px;
+  }
+`;
+
+const FileInput = styled.input`
+  padding: 14px;
+  font-size: 15px;
+  border: 1px solid ${({ theme }) => theme.border || '#d1d5db'};
+  border-radius: 8px;
+  background-color: ${({ theme }) => theme.input_background || '#f9fafb'};
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.primary || '#6366f1'};
+    box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+  }
+
+  @media screen and (max-width: 600px) {
+    font-size: 14px;
+    padding: 12px;
+  }
+`;
+
+const StyledButton = styled(Button)`
+  width: 100%; /* full width */
+  padding: 14px 0;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 8px;
 `;
 
 function SignUp() {
@@ -34,11 +93,15 @@ function SignUp() {
     email: '',
     password: '',
     confirmPassword: '',
-    age: ''
+    age: '',
+    profileImage: null
   });
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleFileChange = (e) =>
+    setForm({ ...form, profileImage: e.target.files[0] });
 
   const handleSubmit = async () => {
     if (form.password !== form.confirmPassword) {
@@ -46,62 +109,82 @@ function SignUp() {
       return;
     }
     try {
-      await axios.post(
-        'http://localhost:5000/api/users/register',
-        {
-          fullName: form.fullName,
-          email: form.email,
-          password: form.password,
-          age: form.age
-        },
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-      alert('User registered successfully!');
+      const data = new FormData();
+      data.append("fullName", form.fullName);
+      data.append("email", form.email);
+      data.append("password", form.password);
+      data.append("age", form.age);
+      if (form.profileImage) {
+        data.append("profileImage", form.profileImage);
+      }
+
+      await axios.post("http://localhost:5047/api/users/register", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      alert("User registered successfully!");
     } catch (err) {
-      alert(err.response?.data?.message || 'Error registering user');
+      alert(err.response?.data?.message || "Error registering user");
     }
   };
 
   return (
-    <Container>
-      <Title>Sign Up</Title>
-      <Span>Create your account</Span>
+    <Wrapper>
+      <Container>
+        <Title>Sign Up</Title>
+        <Span>Create your account</Span>
 
-      <input
-        name="fullName"
-        value={form.fullName}
-        onChange={handleChange}
-        placeholder="Full Name"
-      />
-      <input
-        name="email"
-        value={form.email}
-        onChange={handleChange}
-        placeholder="Email"
-      />
-      <input
-        name="password"
-        type="password"
-        value={form.password}
-        onChange={handleChange}
-        placeholder="Password"
-      />
-      <input
-        name="confirmPassword"
-        type="password"
-        value={form.confirmPassword}
-        onChange={handleChange}
-        placeholder="Confirm Password"
-      />
-      <input
-        name="age"
-        value={form.age}
-        onChange={handleChange}
-        placeholder="Age (optional)"
-      />
+        <TextInput
+          name="fullName"
+          value={form.fullName}
+          onChange={handleChange}
+          placeholder="Full Name"
+          label="Full Name"
+        />
+        <TextInput
+          name="email"
+          value={form.email}
+          onChange={handleChange}
+          placeholder="Email"
+          label="Email"
+          type="email"
+        />
+        <TextInput
+          name="password"
+          type="password"
+          value={form.password}
+          onChange={handleChange}
+          placeholder="Password"
+          label="Password"
+        />
+        <TextInput
+          name="confirmPassword"
+          type="password"
+          value={form.confirmPassword}
+          onChange={handleChange}
+          placeholder="Confirm Password"
+          label="Confirm Password"
+        />
+        <TextInput
+          name="age"
+          value={form.age}
+          onChange={handleChange}
+          placeholder="Age (optional)"
+          label="Age"
+          type="number"
+        />
 
-      <Button onClick={handleSubmit}>Sign Up</Button>
-    </Container>
+        <FileInput
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+        />
+
+        <StyledButton onClick={handleSubmit}>
+          Sign Up
+        </StyledButton>
+      </Container>
+    </Wrapper>
   );
 }
 

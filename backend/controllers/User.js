@@ -1,5 +1,5 @@
-import dotenv from 'dotenv';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
 import User from '../models/User.js';
 import { createError } from '../error.js';
 
@@ -12,14 +12,16 @@ export const register = async (req, res, next) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) return next(createError(400, 'Email already registered'));
 
-    const newUser = new User({ fullName, email, password, age });
+    const profileImageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const newUser = new User({ fullName, email, password, age, profileImageUrl });
     await newUser.save();
 
     if (!process.env.JWT_SECRET) return next(createError(500, 'JWT_SECRET is not defined'));
 
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    res.status(200).json({
+    res.status(201).json({
       success: true,
       message: 'User registered successfully',
       token,
@@ -28,6 +30,7 @@ export const register = async (req, res, next) => {
         fullName: newUser.fullName,
         email: newUser.email,
         age: newUser.age,
+        profileImageUrl: newUser.profileImageUrl,
       },
     });
   } catch (err) {
@@ -39,6 +42,7 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+
     const user = await User.findOne({ email });
     if (!user) return next(createError(404, 'This Email is Wrong!'));
 
@@ -57,6 +61,7 @@ export const login = async (req, res, next) => {
         fullName: user.fullName,
         email: user.email,
         age: user.age,
+        profileImageUrl: user.profileImageUrl,
       },
     });
   } catch (err) {
@@ -64,12 +69,27 @@ export const login = async (req, res, next) => {
   }
 };
 
-// Update user profile
+export const getProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return next(createError(404, 'User not found'));
+    res.status(200).json({ success: true, user });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const updateProfile = async (req, res, next) => {
   try {
     const updates = req.body;
+
+    if (req.file) {
+      updates.profileImageUrl = `/uploads/${req.file.filename}`;
+    }
+
     const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-password');
     if (!user) return next(createError(404, 'User not found'));
+
     res.status(200).json({ success: true, user });
   } catch (err) {
     next(err);
