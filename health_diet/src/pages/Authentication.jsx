@@ -77,7 +77,7 @@ const Authentication = () => {
   return (
     <Container>
       <Left>
-        <Logo src={LogoImage} alt="Fitness Tracker Logo" />
+        <Logo src={LogoImage} alt="Health&Diet" />
         <Image src={AuthImage} alt="Authentication Illustration" />
       </Left>
       <Right>

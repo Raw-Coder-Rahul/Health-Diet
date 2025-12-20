@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { counts } from '../utills/data';
 import CountsCard from '../components/cards/CountsCard';
@@ -9,11 +9,12 @@ import WorkoutCard from '../components/cards/WorkoutCard';
 import AddMeal from '../components/AddMeal';
 import MealCard from '../components/cards/MealCard';
 import NutrientChartCard from '../components/cards/NutrientChartCard';
-import SignUp from '../components/SignUp';
+import CircularProgress from '@mui/material/CircularProgress';
+import { getUserProfile, getWorkoutsByDate } from '../api';
 
 const Container = styled.div`
   flex: 1;
-  height : 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   padding: 22px 0px;
@@ -31,6 +32,7 @@ const Wrapper = styled.div`
     gap: 10px;
   }
 `;
+
 const Title = styled.div`
   font-size: 24px;
   font-weight: 600;
@@ -51,7 +53,6 @@ const Section = styled.div`
   flex-direction: column;
   padding: 0px 16px;
   gap: 22px;
-  padding: 0px 16px;
   @media (max-width: 840px) {
     gap: 12px;
   }
@@ -63,107 +64,126 @@ const CardWrapper = styled.div`
   justify-content: center;
   gap: 20px;
   margin-bottom: 100px;
-  gap: 20px;
 `;
 
 const Dashboard = () => {
   const [workout, setWorkout] = useState('');
   const [meal, setMeal] = useState('');
-  const data = {
-    totalCaloriesBurned: 13500,
-    totalWorkouts: 6,
-    avgCaloriesBurnedPerWorkout: 2250,
-    totalWeeksCaloriesBurned: {
-      weeks: ["17th", "18th", "19th", "20th", "21st", "22nd", "23rd"],
-      caloriesBurned: [10500, 0, 15000, 12000, 18000, 9000, 13500],
-    },
-    pieChartData: [
-      {
-        id: 0,
-        "value": 6000,
-        "label": "Legs"
-      },
-      {
-        id: 1,
-        "value": 4500,
-        "label": "Back"
-      },
-      {
-        id: 2,
-        "value": 3000,
-        "label": "Arms"
-      },
-      {
-        id: 3,
-        "value": 1500,
-        "label": "Chest"
-      },
-      {
-        id: 4,
-        "value": 1500,
-        "label": "Shoulders"
-      }
-    ]
+  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [todayWorkouts, setTodayWorkouts] = useState([]);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const res = await getUserProfile();
+      setStats(res.data?.stats || null);
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const fetchTodayWorkouts = async () => {
+    try {
+      setLoading(true);
+      const today = new Date().toISOString().split("T")[0];
+      const res = await getWorkoutsByDate(today);
+      setTodayWorkouts(res.data?.todayWorkouts || []);
+    } catch (err) {
+      console.error("Error fetching today's workouts:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+    fetchTodayWorkouts();
+  }, []);
+
   return (
     <Container>
       <Wrapper>
         <Title>Dashboard</Title>
-        <FlexWrap>
-          {counts.map((item) => (
-            <CountsCard item={item} data={data} />
-          ))}
-        </FlexWrap>
-        <FlexWrap>
-          <WeeklyStatsCard data={data} />
-          <CategoryChartCard data={data} />
-        </FlexWrap>
-        <FlexWrap>
-          <AddWorkout workout={workout} setWorkout={setWorkout} />
-        </FlexWrap>
-        <Section>
-          <Title>Todays Workouts</Title>
-          <CardWrapper>
-            {/* Workout cards can be added here */}
-            <WorkoutCard />
-            <WorkoutCard />
-            <WorkoutCard />
-            <WorkoutCard />
-          </CardWrapper>
-        </Section>
-        <FlexWrap>
-          <AddMeal meal={meal} setMeal={setMeal} />
-        </FlexWrap>
-        <FlexWrap>
-            <NutrientChartCard
-              title="Veg Meal Nutrient Breakdown"
-              chartData={[
-                { id: 0, value: 60, label: 'Protein' },
-                { id: 1, value: 30, label: 'Fat' },
-                { id: 2, value: 40, label: 'Vitamin' },
-                { id: 3, value: 20, label: 'Glucose' },
-              ]}
-            />
-            <NutrientChartCard
-              title="Non-Veg Meal Nutrient Breakdown"
-              chartData={[
-                { id: 0, value: 90, label: 'Protein' },
-                { id: 1, value: 50, label: 'Fat' },
-                { id: 2, value: 25, label: 'Vitamin' },
-                { id: 3, value: 35, label: 'Glucose' },
-              ]}
-            />
-          </FlexWrap>
-        <Section>
-          <Title>Today's Meals</Title>
-          <CardWrapper>
-            <MealCard type="veg" />
-            <MealCard type="nonveg" />
-          </CardWrapper>
-        </Section>
+
+        {loading ? (
+          <CircularProgress />
+        ) : (
+          <>
+            <FlexWrap>
+              {counts.map((item, idx) => (
+                <CountsCard key={idx} item={item} data={stats} />
+              ))}
+            </FlexWrap>
+
+            <FlexWrap>
+              {stats?.weekly && <WeeklyStatsCard data={stats.weekly} />}
+              {stats?.pieChartData && <CategoryChartCard chartData={stats.pieChartData} />}
+            </FlexWrap>
+
+            <FlexWrap>
+              <AddWorkout
+                workout={workout}
+                setWorkout={setWorkout}
+                onWorkoutAdded={() => {
+                  fetchTodayWorkouts();   
+                  setWorkout('');         
+                }}
+              />
+            </FlexWrap>
+
+            <Section>
+              <Title>Today's Workouts</Title>
+              <CardWrapper>
+                {todayWorkouts.length > 0 ? (
+                  todayWorkouts.map((w) => (
+                    <WorkoutCard key={w._id} workout={w} />
+                  ))
+                ) : (
+                  <p>No workouts logged today.</p>
+                )}
+              </CardWrapper>
+            </Section>
+
+            <FlexWrap>
+              <AddMeal meal={meal} setMeal={setMeal} />
+            </FlexWrap>
+
+            <FlexWrap>
+              <NutrientChartCard
+                title="Veg Meal Nutrient Breakdown"
+                chartData={[
+                  { id: 0, value: 60, label: 'Protein' },
+                  { id: 1, value: 30, label: 'Fat' },
+                  { id: 2, value: 40, label: 'Vitamin' },
+                  { id: 3, value: 20, label: 'Glucose' },
+                ]}
+              />
+              <NutrientChartCard
+                title="Non-Veg Meal Nutrient Breakdown"
+                chartData={[
+                  { id: 0, value: 90, label: 'Protein' },
+                  { id: 1, value: 50, label: 'Fat' },
+                  { id: 2, value: 25, label: 'Vitamin' },
+                  { id: 3, value: 35, label: 'Glucose' },
+                ]}
+              />
+            </FlexWrap>
+
+            <Section>
+              <Title>Today's Meals</Title>
+              <CardWrapper>
+                <MealCard type="veg" />
+                <MealCard type="nonveg" />
+              </CardWrapper>
+            </Section>
+          </>
+        )}
       </Wrapper>
     </Container>
-  )
-}
+  );
+};
 
 export default Dashboard;

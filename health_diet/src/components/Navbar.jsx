@@ -253,7 +253,7 @@ function Navbar({ currentUser }) {
           </TextButton>
         </DrawerLinks>
         <SidebarLogo to="/">
-          <Logo src={LogoImg} alt="Fitness Diet Logo" />
+          <Logo src={LogoImg} alt="Healt&Diet Logo" />
           FitnessDiet
         </SidebarLogo>
       </SideDrawer>

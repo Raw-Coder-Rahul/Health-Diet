@@ -19,7 +19,7 @@ export const updateUserProfile = (data) => API.put("users/profile", data);
 
 export const getWorkoutProfile = () => API.get("workouts/profile");
 export const getWorkoutsByDate = (date) => API.get(`workouts/date?date=${date}`);
-export const addWorkout = (workoutString) =>
-  API.post("workouts/add", { workoutString });
+export const addWorkout = (workoutData) => API.post("workouts/add", workoutData);
+export const getWorkoutStats = () => API.get("workouts/stats");
 
 export default API;

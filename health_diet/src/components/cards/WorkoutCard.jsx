@@ -13,9 +13,6 @@ const Card = styled.div`
   gap: 6px;
   box-shadow: 1px 6px 20px 0px ${({ theme }) => theme.shadow + 15};
   flex-direction: column;
-  @media (max-width: 840px) {
-    padding: 12px 14px;
-  }
 `;
 
 const Category = styled.div`
@@ -41,8 +38,6 @@ const Sets = styled.div`
   font-weight: 500;
   color: ${({ theme }) => theme.text_primary + 'cc'};
   margin-bottom: 12px;
-  diasplay: flex;
-  gap: 8px;
 `;
 
 const Flex = styled.div`
@@ -60,24 +55,45 @@ const Details = styled.div`
   gap: 4px;
 `;
 
-const WorkoutCard = () => {
+const WorkoutCard = ({ workout }) => {
+  if (!workout) return null;
+
   return (
     <Card>
-      <Category>#Legs</Category>
-      <Name>Back Squat</Name>
-      <Sets>Count : 5sets X 10reps</Sets>
+      {workout.category && <Category>#{workout.category}</Category>}
+
+      {workout.workoutName && <Name>{workout.workoutName}</Name>}
+
+      {workout.sets && workout.reps && (
+        <Sets>
+          Count: {workout.sets} sets × {workout.reps} reps
+        </Sets>
+      )}
+
       <Flex>
-        <Details>
-          <FitnessCenterRounded sx={{fontSize: '16px', color: '#555', marginRight: '6px'}} />
-          60kg
-        </Details>
-        <Details>
-          <TimelapseRounded sx={{fontSize: '16px', color: '#555', marginRight: '6px'}} />
-          60kg
-        </Details>
+        {workout.weight && (
+          <Details>
+            <FitnessCenterRounded sx={{ fontSize: '16px', color: '#555', marginRight: '6px' }} />
+            {workout.weight} kg
+          </Details>
+        )}
+        {workout.duration && (
+          <Details>
+            <TimelapseRounded sx={{ fontSize: '16px', color: '#555', marginRight: '6px' }} />
+            {workout.duration} min
+          </Details>
+        )}
       </Flex>
+
+      {workout.caloriesBurned && (
+        <Details>{workout.caloriesBurned} kcal</Details>
+      )}
+
+      {workout.date && (
+        <Details>{new Date(workout.date).toLocaleDateString()}</Details>
+      )}
     </Card>
-  )
-}
+  );
+};
 
 export default WorkoutCard;

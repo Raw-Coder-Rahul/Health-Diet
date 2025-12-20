@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import TextInput from './TextInput';
 import Button from './Button';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import axios from 'axios';
+import { addWorkout } from '../api';
 
 const Card = styled.div`
   flex: 1;
@@ -13,7 +13,7 @@ const Card = styled.div`
   border: 1px solid ${({ theme }) => theme.text_primary + 20};
   border-radius: 8px;
   display: flex;
-  gap: 6px;
+  gap: 12px;
   box-shadow: 1px 6px 20px 0px ${({ theme }) => theme.shadow + 15};
   flex-direction: column;
 `;
@@ -27,14 +27,27 @@ const Title = styled.div`
   }
 `;
 
-const AddWorkout = ({ workout, setWorkout }) => {
+const AddWorkout = ({ workout, setWorkout, onWorkoutAdded }) => {
+  const [loading, setLoading] = useState(false);
+
   const handleAddWorkout = async () => {
+    if (!workout || workout.trim() === '') {
+      toast.error('Please enter workout details before adding.');
+      return;
+    }
+
     try {
-      const res = await axios.post('/api/workouts/add', { workoutString: workout });
+      setLoading(true);
+      await addWorkout({ workoutString: workout.trim() });
       toast.success('Workout Added!');
-      setWorkout("");
+      setWorkout('');
+      if (onWorkoutAdded) {
+        onWorkoutAdded();
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Error adding workout');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,7 +68,13 @@ Weight (kg)`}
         value={workout}
         handleChange={(e) => setWorkout(e.target.value)}
       />
-      <Button primary onClick={handleAddWorkout} text="Add Workout" small />
+      <Button
+        primary
+        onClick={handleAddWorkout}
+        text={loading ? 'Adding...' : 'Add Workout'}
+        small
+        disabled={!workout.trim() || loading}
+      />
       <ToastContainer position="top-center" autoClose={3000} theme="colored" />
     </Card>
   );

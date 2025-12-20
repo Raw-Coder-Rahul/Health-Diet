@@ -12,8 +12,8 @@ const StyledButton = styled.button`
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
-  /* Modern soft shadow */
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: ${({ fullWidth }) => (fullWidth ? '100%' : 'auto')}; /* ✅ */
 
   &:hover {
     background: ${({ theme }) => theme.primary_hover || '#4338ca'};
@@ -34,9 +34,9 @@ const StyledButton = styled.button`
   }
 `;
 
-function Button({ text, onClick, disabled = false }) {
+function Button({ text, onClick, disabled = false, fullWidth = false }) {
   return (
-    <StyledButton onClick={onClick} disabled={disabled}>
+    <StyledButton onClick={onClick} disabled={disabled} fullWidth={fullWidth}>
       {text}
     </StyledButton>
   );

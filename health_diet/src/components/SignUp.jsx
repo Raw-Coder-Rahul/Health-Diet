@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import styled from 'styled-components';
 import TextInput from './TextInput';
 import Button from './Button';
+import { useDispatch } from 'react-redux';
+import { UserSignup } from '../api';   // ✅ use your API helper
+import { loginSuccess } from '../redux/reducers/userSlice';
 
 const Wrapper = styled.div`
-  min-height: 100vh;
+  min-height: 90vh;
+  width: 100%;
   display: flex;
-  align-items: center;
   justify-content: center;
   padding: 24px;
-  background: ${({ theme }) => theme.page_background || '#f3f4f6'};
-  overflow-y: auto; 
 `;
 
 const Container = styled.div`
@@ -24,7 +24,11 @@ const Container = styled.div`
   border-radius: 16px;
   background: ${({ theme }) => theme.card_background || '#fff'};
   box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+  margin: auto;
 
+  max-height: 90vh;
+  overflow-y: auto;
+  
   @media screen and (max-width: 600px) {
     padding: 24px;
     gap: 18px;
@@ -33,7 +37,7 @@ const Container = styled.div`
 `;
 
 const Title = styled.h2`
-  font-size: 32px; 
+  font-size: 32px;
   font-weight: 700;
   color: ${({ theme }) => theme.text_primary};
   text-align: center;
@@ -78,16 +82,11 @@ const FileInput = styled.input`
   }
 `;
 
-const StyledButton = styled(Button)`
-  width: 100%; /* full width */
-  padding: 14px 0;
-  font-size: 16px;
-  font-weight: 600;
-  text-align: center;
-  border-radius: 8px;
-`;
-
 function SignUp() {
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  const [buttonDisabled, setButtonDisabled] = useState(false);
+
   const [form, setForm] = useState({
     fullName: '',
     email: '',
@@ -104,10 +103,18 @@ function SignUp() {
     setForm({ ...form, profileImage: e.target.files[0] });
 
   const handleSubmit = async () => {
+    if (!form.fullName || !form.email || !form.password) {
+      alert('Please fill in all required fields');
+      return;
+    }
     if (form.password !== form.confirmPassword) {
       alert('Passwords do not match!');
       return;
     }
+
+    setLoading(true);
+    setButtonDisabled(true);
+
     try {
       const data = new FormData();
       data.append("fullName", form.fullName);
@@ -118,13 +125,20 @@ function SignUp() {
         data.append("profileImage", form.profileImage);
       }
 
-      await axios.post("http://localhost:5047/api/users/register", data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const res = await UserSignup(data);
+
+      dispatch(loginSuccess(res.data));
+
+      if (res.data.token) {
+        localStorage.setItem("health&Diet_token", res.data.token);
+      }
 
       alert("User registered successfully!");
     } catch (err) {
       alert(err.response?.data?.message || "Error registering user");
+    } finally {
+      setLoading(false);
+      setButtonDisabled(false);
     }
   };
 
@@ -180,9 +194,12 @@ function SignUp() {
           onChange={handleFileChange}
         />
 
-        <StyledButton onClick={handleSubmit}>
-          Sign Up
-        </StyledButton>
+        <Button
+          onClick={handleSubmit}
+          text={loading ? "Signing Up..." : "Sign Up"}
+          fullWidth
+          disabled={buttonDisabled}
+        />
       </Container>
     </Wrapper>
   );

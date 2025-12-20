@@ -9,6 +9,10 @@ export const register = async (req, res, next) => {
   try {
     const { fullName, email, password, age = null } = req.body;
 
+    if (!fullName || !email || !password) {
+      return next(createError(400, 'Full name, email, and password are required'));
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) return next(createError(400, 'Email already registered'));
 
@@ -42,6 +46,10 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return next(createError(400, 'Email and password are required'));
+    }
 
     const user = await User.findOne({ email });
     if (!user) return next(createError(404, 'This Email is Wrong!'));

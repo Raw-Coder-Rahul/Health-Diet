@@ -6,6 +6,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import dayjs from 'dayjs';
 import axios from 'axios';
+import CircularProgress from '@mui/material/CircularProgress';
 
 const Container = styled.div`
   flex: 1;
@@ -18,7 +19,7 @@ const Container = styled.div`
 
 const Wrapper = styled.div`
   flex: 1;
-  max-width: 800px;
+  max-width: 1600px;
   display: flex;
   gap: 22px;
   padding: 0px 16px;
@@ -32,7 +33,6 @@ const Left = styled.div`
   flex: 0.2;
   height: fit-content;
   padding: 18px;
-  color: ${({ theme }) => theme.text_primary};
   border: 1px solid ${({ theme }) => theme.text_primary + 20};
   border-radius: 14px;
   box-shadow: 1px 6px 20px 0px ${({ theme }) => theme.shadow};
@@ -82,14 +82,20 @@ const SecTitle = styled.div`
 const Workouts = () => {
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [workouts, setWorkouts] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchWorkouts = async () => {
       try {
-        const res = await axios.get(`/api/workouts/date?date=${selectedDate.toISOString()}`);
-        setWorkouts(res.data.todayWorkouts || []);
+        setLoading(true);
+        // Format date as YYYY-MM-DD to match backend expectations
+        const dateStr = selectedDate.format('YYYY-MM-DD');
+        const res = await axios.get(`/api/workouts/date?date=${dateStr}`);
+        setWorkouts(res.data?.todayWorkouts || []);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching workouts:", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchWorkouts();
@@ -98,22 +104,34 @@ const Workouts = () => {
   return (
     <Container>
       <Wrapper>
+        {/* Left side: calendar */}
         <Left>
           <Title>Select Date</Title>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DateCalendar value={selectedDate} onChange={(newDate) => setSelectedDate(newDate)} />
+            <DateCalendar
+              value={selectedDate}
+              onChange={(newDate) => setSelectedDate(newDate)}
+            />
           </LocalizationProvider>
         </Left>
+
+        {/* Right side: workouts list */}
         <Right>
           <Section>
             <SecTitle>{selectedDate.format('DD MMM YYYY')} Workouts</SecTitle>
-            <CardWrapper>
-              {workouts.length > 0 ? (
-                workouts.map((w, i) => <WorkoutCard key={i} workout={w} />)
-              ) : (
-                <p>No workouts found</p>
-              )}
-            </CardWrapper>
+            {loading ? (
+              <CircularProgress />
+            ) : (
+              <CardWrapper>
+                {workouts.length > 0 ? (
+                  workouts.map((w) => (
+                    <WorkoutCard key={w._id} workout={w} />
+                  ))
+                ) : (
+                  <p>No workouts found</p>
+                )}
+              </CardWrapper>
+            )}
           </Section>
         </Right>
       </Wrapper>

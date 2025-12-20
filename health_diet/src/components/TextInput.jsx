@@ -65,25 +65,42 @@ const TextArea = styled.textarea`
   }
 `;
 
-function TextInput({ label, placeholder, type = 'text', value, onChange, textArea = false, rows = 6, name }) {
+function TextInput({
+  label,
+  placeholder,
+  type = 'text',
+  value,
+  onChange,
+  textArea = false,
+  rows = 6,
+  name,
+  defaultValue,
+  readOnly = false,
+}) {
   return (
     <InputContainer>
-      <Label>{label}</Label>
+      {label && <Label htmlFor={name}>{label}</Label>}
       {textArea ? (
         <TextArea
+          id={name}
           rows={rows}
           placeholder={placeholder}
           value={value}
+          defaultValue={defaultValue}
           onChange={onChange}
           name={name}
+          readOnly={readOnly}
         />
       ) : (
         <BaseInput
+          id={name}
           type={type}
           placeholder={placeholder}
           value={value}
+          defaultValue={defaultValue}
           onChange={onChange}
           name={name}
+          readOnly={readOnly}
         />
       )}
     </InputContainer>
