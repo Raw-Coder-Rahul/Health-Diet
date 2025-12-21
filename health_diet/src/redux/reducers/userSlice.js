@@ -10,23 +10,15 @@ export const userSlice = createSlice({
   initialState,
   reducers: {
     loginSuccess: (state, action) => {
-      state.currentUser = action.payload.user;
-      state.token = action.payload.token;
-    },
-    loginFailure: (state) => {
-      state.currentUser = null;
-      state.token = null;
+      state.currentUser = action.payload?.user ?? null;
+      state.token = action.payload?.token ?? null;
     },
     logout: (state) => {
-      state.currentUser = null;
-      state.token = null;
-    },
-    clearUser: (state) => {
       state.currentUser = null;
       state.token = null;
     },
   },
 });
 
-export const { loginSuccess, loginFailure, logout, clearUser } = userSlice.actions;
+export const { loginSuccess, logout } = userSlice.actions;
 export default userSlice.reducer;

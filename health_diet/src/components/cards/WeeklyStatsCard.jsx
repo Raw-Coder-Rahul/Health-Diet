@@ -13,6 +13,7 @@ const Card = styled.div`
   box-shadow: 1px 6px 20px 0px ${({ theme }) => theme.shadow + 15};
   flex-direction: column;
 `;
+
 const Title = styled.div`
   font-size: 18px;
   font-weight: 600;
@@ -21,26 +22,25 @@ const Title = styled.div`
     font-size: 14px;
   }
 `;
-const WeeklyStatsCard = ({data}) => {
+
+const WeeklyStatsCard = ({ data }) => {
   return (
     <Card>
       <Title>Weekly Calories Burned</Title>
-      {data?.totalWeeksCaloriesBurned && (
-        <BarChart 
+      {data?.weekly && (
+        <BarChart
           xAxis={[
             {
               scaleType: "band",
-              data: data.totalWeeksCaloriesBurned?.weeks,
+              data: data.weekly?.weeks,
             },
           ]}
-          series={[{ data: data?.totalWeeksCaloriesBurned?.caloriesBurned }]}
-          height={
-            300
-          }
+          series={[{ data: data.weekly?.caloriesBurned }]}
+          height={300}
         />
       )}
     </Card>
-  )
-}
+  );
+};
 
 export default WeeklyStatsCard;

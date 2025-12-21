@@ -1,11 +1,14 @@
+import mongoose from 'mongoose';
 import Workout from '../models/Workout.js';
 import User from '../models/User.js';
 import { createError } from '../error.js';
 
+const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
+
 const getDayBounds = (date) => {
   const d = new Date(date);
-  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
+  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+  const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0, 0);
   return { start, end };
 };
 
@@ -18,18 +21,22 @@ const getDayWithSuffix = (day) => {
     default: return `${day}th`;
   }
 };
+
 const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 const calculateCaloriesBurned = ({ duration = 0, weight = 70 }) => {
-  const durationInMinutes = Number(duration) || 0;
-  const weightInKg = Number(weight) || 70;
-  const caloriesBurnedPerMinute = 5; // simple multiplier
+  const durationInMinutes = Number.isFinite(Number(duration)) ? Number(duration) : 0;
+  const weightInKg = Number.isFinite(Number(weight)) ? Number(weight) : 70;
+  const caloriesBurnedPerMinute = 5;
   return Math.round(durationInMinutes * caloriesBurnedPerMinute * (weightInKg / 70));
 };
 
 export const getProfile = async (req, res, next) => {
   try {
-    const workouts = await Workout.find({ userId: req.user.id }).sort({ date: -1 });
+    const userId = req.userId;
+    if (!userId || !isValidObjectId(userId)) return next(createError(401, 'Unauthorized'));
+
+    const workouts = await Workout.find({ userId }).sort({ date: -1 });
     res.status(200).json(workouts);
   } catch (err) {
     next(err);
@@ -38,11 +45,18 @@ export const getProfile = async (req, res, next) => {
 
 export const getWorkoutsByDate = async (req, res, next) => {
   try {
-    const userId = req.user?.id;
-    const user = await User.findById(userId).select('_id');
-    if (!user) return next(createError(404, "User not found"));
+    const userId = req.userId;
+    if (!userId || !isValidObjectId(userId)) return next(createError(401, 'Unauthorized'));
 
-    const queryDate = req.query.date ? new Date(req.query.date) : new Date();
+    const userExists = await User.exists({ _id: userId });
+    if (!userExists) return next(createError(404, 'User not found'));
+
+    const dateStr = req.query.date; // expected: YYYY-MM-DD
+    const queryDate = dateStr ? new Date(dateStr) : new Date();
+    if (Number.isNaN(queryDate.getTime())) {
+      return next(createError(400, 'Invalid date'));
+    }
+
     const { start, end } = getDayBounds(queryDate);
 
     const todayWorkouts = await Workout.find({
@@ -51,7 +65,8 @@ export const getWorkoutsByDate = async (req, res, next) => {
     }).sort({ date: -1 });
 
     const totalCaloriesBurned = todayWorkouts.reduce(
-      (total, workout) => total + (workout.caloriesBurned || 0), 0
+      (total, w) => total + (Number.isFinite(Number(w.caloriesBurned)) ? Number(w.caloriesBurned) : 0),
+      0
     );
 
     res.status(200).json({ todayWorkouts, totalCaloriesBurned });
@@ -62,8 +77,8 @@ export const getWorkoutsByDate = async (req, res, next) => {
 
 export const addWorkout = async (req, res, next) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) return next(createError(401, "Unauthorized"));
+    const userId = req.userId;
+    if (!userId || !isValidObjectId(userId)) return next(createError(401, "Unauthorized"));
 
     const {
       category,
@@ -74,57 +89,113 @@ export const addWorkout = async (req, res, next) => {
       duration,
       caloriesBurned,
       date,
+      workoutString,
     } = req.body;
 
     if (category && workoutName) {
+      const setsNum = Number(sets);
+      const repsNum = Number(reps);
+      const weightNum = Number(weight);
+      const durationNum = Number(duration);
+      const caloriesNum = Number(caloriesBurned);
+
+      const safeWeight = Number.isFinite(weightNum) ? weightNum : 70;
+      const workoutDate = date ? new Date(date) : new Date();
+      const { start, end } = getDayBounds(workoutDate);
+
+      const existingWorkout = await Workout.findOne({
+        userId,
+        category: String(category).trim(),
+        workoutName: String(workoutName).trim(),
+        date: { $gte: start, $lt: end },
+      });
+
+      if (existingWorkout) {
+        existingWorkout.sets += Number.isFinite(setsNum) ? setsNum : 0;
+        existingWorkout.reps += Number.isFinite(repsNum) ? repsNum : 0;
+        existingWorkout.duration += Number.isFinite(durationNum) ? durationNum : 0;
+        existingWorkout.weight = Number.isFinite(weightNum) ? weightNum : existingWorkout.weight;
+        existingWorkout.caloriesBurned += Number.isFinite(caloriesNum)
+          ? caloriesNum
+          : calculateCaloriesBurned({ duration: durationNum, weight: safeWeight });
+
+        await existingWorkout.save();
+        return res.status(200).json(existingWorkout);
+      }
+
       const payload = {
         userId,
         category: String(category).trim(),
         workoutName: String(workoutName).trim(),
-        sets: isFinite(sets) ? Number(sets) : undefined,
-        reps: isFinite(reps) ? Number(reps) : undefined,
-        weight: isFinite(weight) ? Number(weight) : undefined,
-        duration: isFinite(duration) ? Number(duration) : undefined,
-        caloriesBurned: isFinite(caloriesBurned)
-          ? Number(caloriesBurned)
-          : calculateCaloriesBurned({ duration, weight }),
-        date: date ? new Date(date) : new Date(),
+        sets: Number.isFinite(setsNum) ? setsNum : 0,
+        reps: Number.isFinite(repsNum) ? repsNum : 0,
+        weight: Number.isFinite(weightNum) ? weightNum : 0,
+        duration: Number.isFinite(durationNum) ? durationNum : 0,
+        caloriesBurned: Number.isFinite(caloriesNum)
+          ? caloriesNum
+          : calculateCaloriesBurned({ duration: durationNum, weight: safeWeight }),
+        date: workoutDate,
       };
 
       const created = await Workout.create(payload);
       return res.status(201).json(created);
     }
-    const { workoutString } = req.body;
+
     if (!workoutString) {
       return next(createError(400, "Provide either structured workout fields or workoutString"));
     }
 
-    const lines = workoutString.split("\n").map(l => l.trim()).filter(Boolean);
+    const lines = workoutString.split("\n").map((l) => l.trim()).filter(Boolean);
     if (lines.length < 6 || !lines[0].startsWith("#")) {
       return next(createError(400, "Invalid workoutString format"));
     }
 
     const categoryParsed = lines[0].substring(1).trim();
     const workoutNameParsed = lines[1];
-    const durationParsed = Number(lines[2].toLowerCase().replace("min", "").trim());
-    const setsParsed = Number(lines[3].toLowerCase().replace("sets", "").trim());
-    const repsParsed = Number(lines[4].toLowerCase().replace("reps", "").trim());
-    const weightParsed = Number(lines[5].toLowerCase().replace("kg", "").trim());
+    const durationParsed = parseInt(lines[2].replace(/[^0-9]/g, ""), 10);
+    const setsParsed = parseInt(lines[3].replace(/[^0-9]/g, ""), 10);
+    const repsParsed = parseInt(lines[4].replace(/[^0-9]/g, ""), 10);
+    const weightParsed = parseInt(lines[5].replace(/[^0-9]/g, ""), 10);
 
     if (!categoryParsed || !workoutNameParsed) {
       return next(createError(400, "Category and workoutName are required"));
+    }
+
+    const safeWeightParsed = Number.isFinite(weightParsed) ? weightParsed : 70;
+    const workoutDate = new Date();
+    const { start, end } = getDayBounds(workoutDate);
+
+    const existingWorkout = await Workout.findOne({
+      userId,
+      category: categoryParsed,
+      workoutName: workoutNameParsed,
+      date: { $gte: start, $lt: end },
+    });
+
+    if (existingWorkout) {
+      existingWorkout.sets += Number.isFinite(setsParsed) ? setsParsed : 0;
+      existingWorkout.reps += Number.isFinite(repsParsed) ? repsParsed : 0;
+      existingWorkout.duration += Number.isFinite(durationParsed) ? durationParsed : 0;
+      existingWorkout.weight = Number.isFinite(weightParsed) ? weightParsed : existingWorkout.weight;
+      existingWorkout.caloriesBurned += calculateCaloriesBurned({
+        duration: durationParsed,
+        weight: safeWeightParsed,
+      });
+
+      await existingWorkout.save();
+      return res.status(200).json(existingWorkout);
     }
 
     const payload = {
       userId,
       category: categoryParsed,
       workoutName: workoutNameParsed,
-      sets: isFinite(setsParsed) ? setsParsed : undefined,
-      reps: isFinite(repsParsed) ? repsParsed : undefined,
-      weight: isFinite(weightParsed) ? weightParsed : undefined,
-      duration: isFinite(durationParsed) ? durationParsed : undefined,
-      caloriesBurned: calculateCaloriesBurned({ duration: durationParsed, weight: weightParsed }),
-      date: new Date(),
+      sets: Number.isFinite(setsParsed) ? setsParsed : 0,
+      reps: Number.isFinite(repsParsed) ? repsParsed : 0,
+      weight: Number.isFinite(weightParsed) ? weightParsed : 0,
+      duration: Number.isFinite(durationParsed) ? durationParsed : 0,
+      caloriesBurned: calculateCaloriesBurned({ duration: durationParsed, weight: safeWeightParsed }),
+      date: workoutDate,
     };
 
     const created = await Workout.create(payload);
@@ -136,21 +207,28 @@ export const addWorkout = async (req, res, next) => {
 
 export const getUserDashboardStats = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const userId = req.userId;
+    if (!userId || !isValidObjectId(userId)) return next(createError(401, 'Unauthorized'));
+
+    const user = await User.findById(userId).select('-password');
     if (!user) return next(createError(404, 'User not found'));
 
     const today = new Date();
     const { start: startToday, end: endToday } = getDayBounds(today);
 
-    // Today totals
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+
     const todayAgg = await Workout.aggregate([
-      { $match: { userId: req.user.id, date: { $gte: startToday, $lt: endToday } } },
-      { $group: {
-        _id: null,
-        totalCaloriesBurned: { $sum: { $ifNull: ['$caloriesBurned', 0] } },
-        totalWorkouts: { $sum: 1 }
-      } }
+      { $match: { userId: userObjectId, date: { $gte: startToday, $lt: endToday } } },
+      {
+        $group: {
+          _id: null,
+          totalCaloriesBurned: { $sum: { $ifNull: ['$caloriesBurned', 0] } },
+          totalWorkouts: { $sum: 1 },
+        },
+      },
     ]);
+
     const todayStats = todayAgg[0] || { totalCaloriesBurned: 0, totalWorkouts: 0 };
     const avgCaloriesBurnedPerWorkout =
       todayStats.totalWorkouts > 0
@@ -158,10 +236,16 @@ export const getUserDashboardStats = async (req, res, next) => {
         : 0;
 
     const categoryAgg = await Workout.aggregate([
-      { $match: { userId: req.user.id, date: { $gte: startToday, $lt: endToday } } },
-      { $group: { _id: '$category', totalCaloriesBurned: { $sum: { $ifNull: ['$caloriesBurned', 0] } } } },
-      { $sort: { totalCaloriesBurned: -1 } }
+      { $match: { userId: userObjectId, date: { $gte: startToday, $lt: endToday } } },
+      {
+        $group: {
+          _id: '$category',
+          totalCaloriesBurned: { $sum: { $ifNull: ['$caloriesBurned', 0] } },
+        },
+      },
+      { $sort: { totalCaloriesBurned: -1 } },
     ]);
+
     const pieChartData = categoryAgg.map((c, idx) => ({
       id: idx,
       value: c.totalCaloriesBurned,
@@ -170,19 +254,34 @@ export const getUserDashboardStats = async (req, res, next) => {
 
     const weeks = [];
     const caloriesBurned = [];
+    const workoutsCount = [];
+
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       const { start, end } = getDayBounds(d);
 
       const dayAgg = await Workout.aggregate([
-        { $match: { userId: req.user.id, date: { $gte: start, $lt: end } } },
-        { $group: { _id: null, totalCaloriesBurned: { $sum: { $ifNull: ['$caloriesBurned', 0] } } } }
+        { $match: {
+            userId: userObjectId,
+            date: { $gte: start, $lt: end } 
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalCaloriesBurned: { $sum: { $ifNull: ['$caloriesBurned', 0] } },
+            totalWorkouts: { $sum: 1 },
+          },
+        },
       ]);
-      const dayTotal = dayAgg[0]?.totalCaloriesBurned ?? 0;
+
+      const dayTotalCalories = dayAgg.length > 0 ? dayAgg[0].totalCaloriesBurned : 0;
+      const dayTotalWorkouts = dayAgg.length > 0 ? dayAgg[0].totalWorkouts : 0;
 
       weeks.push(`${getDayWithSuffix(d.getDate())} ${monthNames[d.getMonth()]}`);
-      caloriesBurned.push(dayTotal);
+      caloriesBurned.push(dayTotalCalories);
+      workoutsCount.push(dayTotalWorkouts);
     }
 
     res.status(200).json({
@@ -192,7 +291,7 @@ export const getUserDashboardStats = async (req, res, next) => {
         totalCaloriesBurned: todayStats.totalCaloriesBurned,
         totalWorkouts: todayStats.totalWorkouts,
         avgCaloriesBurnedPerWorkout,
-        weekly: { weeks, caloriesBurned },
+        weekly: { weeks, caloriesBurned, workoutsCount },
         pieChartData,
       },
     });

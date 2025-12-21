@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import TextInput from './TextInput';
-import Button from './Button';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { addWorkout } from '../api';
+import React, { useState } from "react";
+import styled from "styled-components";
+import TextInput from "./TextInput";
+import Button from "./Button";
+import { toast } from "react-toastify";
+import { addWorkout } from "../api";
+import { useDispatch } from "react-redux";
+import { addWorkoutSuccess } from "../redux/reducers/workoutSlice";
 
 const Card = styled.div`
   flex: 1;
@@ -27,25 +28,60 @@ const Title = styled.div`
   }
 `;
 
-const AddWorkout = ({ workout, setWorkout, onWorkoutAdded }) => {
+const AddWorkout = ({ onWorkoutAdded }) => {
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    category: "",
+    workoutName: "",
+    sets: "",
+    reps: "",
+    weight: "",
+    duration: "",
+    caloriesBurned: "",
+  });
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleAddWorkout = async () => {
-    if (!workout || workout.trim() === '') {
-      toast.error('Please enter workout details before adding.');
+    const { category, workoutName } = form;
+    if (!category.trim() || !workoutName.trim()) {
+      toast.error("Category and Workout Name are required.");
       return;
     }
 
     try {
       setLoading(true);
-      await addWorkout({ workoutString: workout.trim() });
-      toast.success('Workout Added!');
-      setWorkout('');
-      if (onWorkoutAdded) {
-        onWorkoutAdded();
-      }
+      const { data } = await addWorkout({
+        category: category.trim(),
+        workoutName: workoutName.trim(),
+        sets: form.sets ? Number(form.sets) : undefined,
+        reps: form.reps ? Number(form.reps) : undefined,
+        weight: form.weight ? Number(form.weight) : undefined,
+        duration: form.duration ? Number(form.duration) : undefined,
+        caloriesBurned: form.caloriesBurned
+          ? Number(form.caloriesBurned)
+          : undefined,
+      });
+
+      dispatch(addWorkoutSuccess(data));
+
+      toast.success("Workout Added!");
+      setForm({
+        category: "",
+        workoutName: "",
+        sets: "",
+        reps: "",
+        weight: "",
+        duration: "",
+        caloriesBurned: "",
+      });
+
+      if (onWorkoutAdded) onWorkoutAdded(); 
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Error adding workout');
+      toast.error(err.response?.data?.message || "Error adding workout");
     } finally {
       setLoading(false);
     }
@@ -54,28 +90,63 @@ const AddWorkout = ({ workout, setWorkout, onWorkoutAdded }) => {
   return (
     <Card>
       <Title>Add New Workout</Title>
+
       <TextInput
-        label="Workout"
-        textArea
-        rows={10}
-        placeholder={`Enter workout details. Format:
-#Category
-Workout Name
-Duration (min)
-Sets
-Reps
-Weight (kg)`}
-        value={workout}
-        handleChange={(e) => setWorkout(e.target.value)}
+        label="Category"
+        placeholder="e.g. Hands"
+        value={form.category}
+        name="category"
+        handleChange={handleChange}
       />
+      <TextInput
+        label="Workout Name"
+        placeholder="e.g. Push Up"
+        value={form.workoutName}
+        name="workoutName"
+        handleChange={handleChange}
+      />
+      <TextInput
+        label="Sets"
+        type="number"
+        value={form.sets}
+        name="sets"
+        handleChange={handleChange}
+      />
+      <TextInput
+        label="Reps"
+        type="number"
+        value={form.reps}
+        name="reps"
+        handleChange={handleChange}
+      />
+      <TextInput
+        label="Weight (kg)"
+        type="number"
+        value={form.weight}
+        name="weight"
+        handleChange={handleChange}
+      />
+      <TextInput
+        label="Duration (min)"
+        type="number"
+        value={form.duration}
+        name="duration"
+        handleChange={handleChange}
+      />
+      <TextInput
+        label="Calories Burned (optional)"
+        type="number"
+        value={form.caloriesBurned}
+        name="caloriesBurned"
+        handleChange={handleChange}
+      />
+
       <Button
         primary
         onClick={handleAddWorkout}
-        text={loading ? 'Adding...' : 'Add Workout'}
-        small
-        disabled={!workout.trim() || loading}
+        text={loading ? "Adding..." : "Add Workout"}
+        disabled={loading || !form.category.trim() || !form.workoutName.trim()}
       />
-      <ToastContainer position="top-center" autoClose={3000} theme="colored" />
     </Card>
   );
 };

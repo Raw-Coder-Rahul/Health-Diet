@@ -12,29 +12,26 @@ import {
 import userReducer from "./reducers/userSlice";
 import createWebStorage from "redux-persist/es/storage/createWebStorage";
 
-const createNoopStorage = () => {
-  return {
-    getItem() {
-      return Promise.resolve(null);
-    },
-    setItem(_key, value) {
-      return Promise.resolve(value);
-    },
-    removeItem() {
-      return Promise.resolve();
-    },
-  };
-};
+const createNoopStorage = () => ({
+  getItem() {
+    return Promise.resolve(null);
+  },
+  setItem(_key, value) {
+    return Promise.resolve(value);
+  },
+  removeItem() {
+    return Promise.resolve();
+  },
+});
 
 const storage =
-  typeof window !== "undefined"
-    ? createWebStorage("local")
-    : createNoopStorage();
+  typeof window !== "undefined" ? createWebStorage("local") : createNoopStorage();
 
 const persistConfig = {
   key: "healthDiet",
   version: 1,
   storage,
+  whitelist: ["user"],
 };
 
 const rootReducer = combineReducers({

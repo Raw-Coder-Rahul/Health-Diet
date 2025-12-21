@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
-import { counts } from '../utills/data';
-import CountsCard from '../components/cards/CountsCard';
-import WeeklyStatsCard from '../components/cards/WeeklyStatsCard';
-import CategoryChartCard from '../components/cards/CategoryChartCard';
-import AddWorkout from '../components/AddWorkout';
-import WorkoutCard from '../components/cards/WorkoutCard';
-import AddMeal from '../components/AddMeal';
-import MealCard from '../components/cards/MealCard';
-import NutrientChartCard from '../components/cards/NutrientChartCard';
-import CircularProgress from '@mui/material/CircularProgress';
-import { getUserProfile, getWorkoutsByDate } from '../api';
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
+import { counts } from "../utills/data";
+import CountsCard from "../components/cards/CountsCard";
+import WeeklyStatsCard from "../components/cards/WeeklyStatsCard";
+import CategoryChartCard from "../components/cards/CategoryChartCard";
+import AddWorkout from "../components/AddWorkout";
+import WorkoutCard from "../components/cards/WorkoutCard";
+import AddMeal from "../components/AddMeal";
+import MealCard from "../components/cards/MealCard";
+import NutrientChartCard from "../components/cards/NutrientChartCard";
+import CircularProgress from "@mui/material/CircularProgress";
+import { getWorkoutStats, getWorkoutsByDate } from "../api";
 
 const Container = styled.div`
   flex: 1;
@@ -67,40 +67,43 @@ const CardWrapper = styled.div`
 `;
 
 const Dashboard = () => {
-  const [workout, setWorkout] = useState('');
-  const [meal, setMeal] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [meal, setMeal] = useState("");
+  const [loadingStats, setLoadingStats] = useState(false);
+  const [loadingWorkouts, setLoadingWorkouts] = useState(false);
   const [stats, setStats] = useState(null);
   const [todayWorkouts, setTodayWorkouts] = useState([]);
 
   const fetchStats = async () => {
     try {
-      setLoading(true);
-      const res = await getUserProfile();
+      setLoadingStats(true);
+      const res = await getWorkoutStats();
       setStats(res.data?.stats || null);
     } catch (err) {
       console.error("Error fetching stats:", err);
     } finally {
-      setLoading(false);
+      setLoadingStats(false);
     }
   };
 
   const fetchTodayWorkouts = async () => {
     try {
-      setLoading(true);
+      setLoadingWorkouts(true);
       const today = new Date().toISOString().split("T")[0];
       const res = await getWorkoutsByDate(today);
       setTodayWorkouts(res.data?.todayWorkouts || []);
     } catch (err) {
       console.error("Error fetching today's workouts:", err);
     } finally {
-      setLoading(false);
+      setLoadingWorkouts(false);
     }
   };
 
+  const refreshDashboard = async () => {
+    await Promise.all([fetchStats(), fetchTodayWorkouts()]);
+  };
+
   useEffect(() => {
-    fetchStats();
-    fetchTodayWorkouts();
+    refreshDashboard();
   }, []);
 
   return (
@@ -108,32 +111,29 @@ const Dashboard = () => {
       <Wrapper>
         <Title>Dashboard</Title>
 
-        {loading ? (
+        {loadingStats || loadingWorkouts ? (
           <CircularProgress />
         ) : (
           <>
+            {/* Counts cards */}
             <FlexWrap>
               {counts.map((item, idx) => (
                 <CountsCard key={idx} item={item} data={stats} />
               ))}
             </FlexWrap>
 
+            {/* Weekly bar chart + Category pie chart */}
             <FlexWrap>
               {stats?.weekly && <WeeklyStatsCard data={stats.weekly} />}
-              {stats?.pieChartData && <CategoryChartCard chartData={stats.pieChartData} />}
+              {stats?.pieChartData && <CategoryChartCard data={stats} />}
             </FlexWrap>
 
+            {/* Add workout form */}
             <FlexWrap>
-              <AddWorkout
-                workout={workout}
-                setWorkout={setWorkout}
-                onWorkoutAdded={() => {
-                  fetchTodayWorkouts();   
-                  setWorkout('');         
-                }}
-              />
+              <AddWorkout onWorkoutAdded={refreshDashboard} />
             </FlexWrap>
 
+            {/* Today's workouts list */}
             <Section>
               <Title>Today's Workouts</Title>
               <CardWrapper>
@@ -147,31 +147,34 @@ const Dashboard = () => {
               </CardWrapper>
             </Section>
 
+            {/* Add meal form */}
             <FlexWrap>
               <AddMeal meal={meal} setMeal={setMeal} />
             </FlexWrap>
 
+            {/* Nutrient charts */}
             <FlexWrap>
               <NutrientChartCard
                 title="Veg Meal Nutrient Breakdown"
                 chartData={[
-                  { id: 0, value: 60, label: 'Protein' },
-                  { id: 1, value: 30, label: 'Fat' },
-                  { id: 2, value: 40, label: 'Vitamin' },
-                  { id: 3, value: 20, label: 'Glucose' },
+                  { id: 0, value: 60, label: "Protein" },
+                  { id: 1, value: 30, label: "Fat" },
+                  { id: 2, value: 40, label: "Vitamin" },
+                  { id: 3, value: 20, label: "Glucose" },
                 ]}
               />
               <NutrientChartCard
                 title="Non-Veg Meal Nutrient Breakdown"
                 chartData={[
-                  { id: 0, value: 90, label: 'Protein' },
-                  { id: 1, value: 50, label: 'Fat' },
-                  { id: 2, value: 25, label: 'Vitamin' },
-                  { id: 3, value: 35, label: 'Glucose' },
+                  { id: 0, value: 90, label: "Protein" },
+                  { id: 1, value: 50, label: "Fat" },
+                  { id: 2, value: 25, label: "Vitamin" },
+                  { id: 3, value: 35, label: "Glucose" },
                 ]}
               />
             </FlexWrap>
 
+            {/* Today's meals */}
             <Section>
               <Title>Today's Meals</Title>
               <CardWrapper>

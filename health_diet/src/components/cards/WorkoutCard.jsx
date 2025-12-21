@@ -64,33 +64,43 @@ const WorkoutCard = ({ workout }) => {
 
       {workout.workoutName && <Name>{workout.workoutName}</Name>}
 
-      {workout.sets && workout.reps && (
+      {Number.isFinite(workout.sets) && Number.isFinite(workout.reps) && (
         <Sets>
           Count: {workout.sets} sets × {workout.reps} reps
         </Sets>
       )}
 
       <Flex>
-        {workout.weight && (
+        {Number.isFinite(workout.weight) && (
           <Details>
-            <FitnessCenterRounded sx={{ fontSize: '16px', color: '#555', marginRight: '6px' }} />
+            <FitnessCenterRounded sx={{ fontSize: 16, color: '#555', mr: 1 }} />
             {workout.weight} kg
           </Details>
         )}
-        {workout.duration && (
+        {Number.isFinite(workout.duration) && (
           <Details>
-            <TimelapseRounded sx={{ fontSize: '16px', color: '#555', marginRight: '6px' }} />
+            <TimelapseRounded sx={{ fontSize: 16, color: '#555', mr: 1 }} />
             {workout.duration} min
           </Details>
         )}
       </Flex>
 
-      {workout.caloriesBurned && (
+      {Number.isFinite(workout.totalVolume) && workout.totalVolume > 0 && (
+        <Details>Total Volume: {workout.totalVolume}</Details>
+      )}
+
+      {Number.isFinite(workout.caloriesBurned) && (
         <Details>{workout.caloriesBurned} kcal</Details>
       )}
 
       {workout.date && (
-        <Details>{new Date(workout.date).toLocaleDateString()}</Details>
+        <Details>
+          {new Date(workout.date).toLocaleDateString('en-US', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          })}
+        </Details>
       )}
     </Card>
   );

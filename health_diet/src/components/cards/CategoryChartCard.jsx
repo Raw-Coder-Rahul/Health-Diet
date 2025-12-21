@@ -10,7 +10,7 @@ const Card = styled.div`
   border-radius: 8px;
   display: flex;
   gap: 6px;
-  box-shadow: 1px 6px 20px 0px ${({ theme }) => theme.shadow + 15};
+  box-shadow: 1px 6px 20px 0px ${({ theme }) => theme.shadow};
   flex-direction: column;
 `;
 
@@ -23,25 +23,25 @@ const Title = styled.div`
   }
 `;
 
-const CategoryChartCard = ({data}) => {
+const CategoryChartCard = ({ data }) => {
   return (
     <Card>
-      <Title>Weekly Calories Burned</Title>
+      <Title>Calories Burned by Category (Today)</Title>
       {data?.pieChartData && (
-        <PieChart 
-          series={[{ 
-            data: data?.pieChartData,
-            innerRadius: 30,
-            paddingAngle: 2,
-            cornerRadius: 5,
-           }]}
-          height={
-            300
-          }
+        <PieChart
+          series={[
+            {
+              data: data?.pieChartData,
+              innerRadius: 30,
+              paddingAngle: 2,
+              cornerRadius: 5,
+            },
+          ]}
+          height={300}
         />
       )}
     </Card>
-  )
-}
+  );
+};
 
 export default CategoryChartCard;

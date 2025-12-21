@@ -71,12 +71,15 @@ function TextInput({
   type = 'text',
   value,
   onChange,
+  handleChange,
   textArea = false,
   rows = 6,
   name,
   defaultValue,
   readOnly = false,
 }) {
+  const changeHandler = onChange || handleChange;
+
   return (
     <InputContainer>
       {label && <Label htmlFor={name}>{label}</Label>}
@@ -87,7 +90,7 @@ function TextInput({
           placeholder={placeholder}
           value={value}
           defaultValue={defaultValue}
-          onChange={onChange}
+          onChange={changeHandler}
           name={name}
           readOnly={readOnly}
         />
@@ -98,7 +101,7 @@ function TextInput({
           placeholder={placeholder}
           value={value}
           defaultValue={defaultValue}
-          onChange={onChange}
+          onChange={changeHandler}
           name={name}
           readOnly={readOnly}
         />

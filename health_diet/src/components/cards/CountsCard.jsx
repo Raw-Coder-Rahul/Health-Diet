@@ -89,8 +89,8 @@ const CountsCard = ({ item, data }) => {
   const isNumber = typeof rawValue === 'number' && !Number.isNaN(rawValue);
   const displayValue = isNumber ? rawValue.toFixed(2) : '--';
 
-  const trendPercent = item?.trend ?? 10;
-  const isPositive = trendPercent >= 0;
+  const trendPercent = item?.trend ?? 0;
+  const isPositive = trendPercent >= 0; 
 
   return (
     <Card>
@@ -100,7 +100,9 @@ const CountsCard = ({ item, data }) => {
           {displayValue}
           {item?.unit && <Unit>{item.unit}</Unit>}
           <Trend $positive={isPositive}>
-            {isPositive ? `+${Math.abs(trendPercent)}%` : `-${Math.abs(trendPercent)}%`}
+            {isPositive
+              ? `+${Math.abs(trendPercent)}%`
+              : `-${Math.abs(trendPercent)}%`}
           </Trend>
         </Value>
         <Desc>{item?.desc || ''}</Desc>

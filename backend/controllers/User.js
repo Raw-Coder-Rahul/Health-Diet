@@ -79,7 +79,7 @@ export const login = async (req, res, next) => {
 
 export const getProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findById(req.userId).select('-password');
     if (!user) return next(createError(404, 'User not found'));
     res.status(200).json({ success: true, user });
   } catch (err) {
@@ -95,7 +95,7 @@ export const updateProfile = async (req, res, next) => {
       updates.profileImageUrl = `/uploads/${req.file.filename}`;
     }
 
-    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-password');
+    const user = await User.findByIdAndUpdate(req.userId, updates, { new: true }).select('-password');
     if (!user) return next(createError(404, 'User not found'));
 
     res.status(200).json({ success: true, user });

@@ -1,10 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
-/* Base Reset */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
 }
 
 html {
@@ -13,7 +14,7 @@ html {
 }
 
 body {
-  height: 100%;
+  min-height: 100vh;
   font-family: 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -22,7 +23,6 @@ body {
   line-height: 1.6;
 }
 
-/* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 12px;
 }
@@ -40,15 +40,12 @@ body {
   background: #555;
 }
 
-/* Firefox Scrollbar (limited support) */
-
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #888 #f1f1f1;
-}
-
-/* Anchor Styling */
 a {
   text-decoration: none;
   color: inherit;
+}
+
+a:hover,
+a:focus {
+  color: #0073e6;
 }

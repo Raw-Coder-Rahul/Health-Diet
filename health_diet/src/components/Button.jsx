@@ -1,4 +1,3 @@
-// Button.jsx
 import React from 'react';
 import styled from 'styled-components';
 
@@ -13,7 +12,7 @@ const StyledButton = styled.button`
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  width: ${({ fullWidth }) => (fullWidth ? '100%' : 'auto')}; /* ✅ */
+  width: ${({ $fullWidth }) => ($fullWidth ? '100%' : 'auto')};
 
   &:hover {
     background: ${({ theme }) => theme.primary_hover || '#4338ca'};
@@ -36,9 +35,10 @@ const StyledButton = styled.button`
 
 function Button({ text, onClick, disabled = false, fullWidth = false }) {
   return (
-    <StyledButton onClick={onClick} disabled={disabled} fullWidth={fullWidth}>
+    <StyledButton onClick={onClick} disabled={disabled} $fullWidth={fullWidth}>
       {text}
     </StyledButton>
   );
 }
+
 export default Button;

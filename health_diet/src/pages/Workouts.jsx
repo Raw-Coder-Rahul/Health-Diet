@@ -5,8 +5,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import dayjs from 'dayjs';
-import axios from 'axios';
 import CircularProgress from '@mui/material/CircularProgress';
+import { getWorkoutsByDate } from '../api';
 
 const Container = styled.div`
   flex: 1;
@@ -84,21 +84,22 @@ const Workouts = () => {
   const [workouts, setWorkouts] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const fetchWorkouts = async (date) => {
+    try {
+      setLoading(true);
+      const dateStr = date.format('YYYY-MM-DD');
+      const res = await getWorkoutsByDate(dateStr);
+      setWorkouts(res.data?.todayWorkouts || []);
+    } catch (err) {
+      console.error("Error fetching workouts:", err);
+      setWorkouts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchWorkouts = async () => {
-      try {
-        setLoading(true);
-        // Format date as YYYY-MM-DD to match backend expectations
-        const dateStr = selectedDate.format('YYYY-MM-DD');
-        const res = await axios.get(`/api/workouts/date?date=${dateStr}`);
-        setWorkouts(res.data?.todayWorkouts || []);
-      } catch (err) {
-        console.error("Error fetching workouts:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchWorkouts();
+    fetchWorkouts(selectedDate);
   }, [selectedDate]);
 
   return (
