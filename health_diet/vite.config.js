@@ -4,13 +4,13 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    chunkSizeWarningLimit: 1000, // increase limit to 1 MB
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ['react', 'react-dom'],
-          redux: ['react-redux', '@reduxjs/toolkit'],
-          mui: ['@mui/material', '@mui/icons-material'],
+        manualChunks(id) {
+          if (id.includes('node_modules/react')) return 'react'
+          if (id.includes('node_modules/react-redux')) return 'redux'
+          if (id.includes('node_modules/@mui')) return 'mui'
         },
       },
     },
