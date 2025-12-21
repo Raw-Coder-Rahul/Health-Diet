@@ -19,6 +19,7 @@ const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
+  height: 100vh;
 `;
 
 const Title = styled.h2`

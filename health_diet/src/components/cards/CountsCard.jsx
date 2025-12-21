@@ -1,5 +1,5 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 
 const Card = styled.div`
   flex: 1;
@@ -10,6 +10,8 @@ const Card = styled.div`
   display: flex;
   gap: 6px;
   box-shadow: 1px 6px 20px 0px ${({ theme }) => theme.shadow + 15};
+  align-items: center;
+  justify-content: space-between;
 `;
 
 const Left = styled.div`
@@ -31,13 +33,16 @@ const Title = styled.div`
   }
 `;
 
+const ValueWrapper = styled.div`
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+`;
+
 const Value = styled.div`
   font-size: 20px;
   font-weight: 600;
   color: ${({ theme }) => theme.text_primary};
-  display: flex;
-  align-items: end;
-  gap: 8px;
   @media (max-width: 768px) {
     font-size: 14px;
   }
@@ -46,30 +51,31 @@ const Value = styled.div`
 const Unit = styled.div`
   font-size: 16px;
   margin-bottom: 2px;
-`;
-
-const Desc = styled.div`
-  font-size: 14px;
   color: ${({ theme }) => theme.text_secondary};
-  margin-bottom: 6px;
-  @media (max-width: 768px) {
-    font-size: 12px;
-  }
-  @media (max-width: 840px) {
-    font-size: 12px;
-  }
 `;
 
 const Trend = styled.div`
   font-weight: 500;
   font-size: 16px;
-  color: ${({ $positive }) => ($positive ? '#46af4aff' : '#f44336')};
-  margin-bottom: 3px;
+  color: ${({ $positive }) => ($positive ? "#46af4aff" : "#f44336")};
+  margin-left: 6px;
   @media (max-width: 768px) {
     font-size: 12px;
   }
   @media (max-width: 840px) {
     font-size: 10px;
+  }
+`;
+
+const Desc = styled.div`
+  font-size: 14px;
+  color: ${({ theme }) => theme.text_secondary};
+  margin-top: 4px;
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
+  @media (max-width: 840px) {
+    font-size: 12px;
   }
 `;
 
@@ -82,30 +88,31 @@ const Icon = styled.div`
   border-radius: 8px;
   color: ${({ $color }) => $color};
   background-color: ${({ $bg }) => $bg};
+  font-size: 22px;
 `;
 
 const CountsCard = ({ item, data }) => {
   const rawValue = data ? data[item?.key] : undefined;
-  const isNumber = typeof rawValue === 'number' && !Number.isNaN(rawValue);
-  const displayValue = isNumber ? rawValue.toFixed(2) : '--';
+  const isNumber = typeof rawValue === "number" && !Number.isNaN(rawValue);
+  const displayValue = isNumber ? rawValue.toFixed(2) : "--";
 
   const trendPercent = item?.trend ?? 0;
-  const isPositive = trendPercent >= 0; 
+  const isPositive = trendPercent >= 0;
 
   return (
     <Card>
       <Left>
-        <Title>{item?.name || '—'}</Title>
-        <Value>
-          {displayValue}
+        <Title>{item?.name || "—"}</Title>
+        <ValueWrapper>
+          <Value>{displayValue}</Value>
           {item?.unit && <Unit>{item.unit}</Unit>}
           <Trend $positive={isPositive}>
             {isPositive
               ? `+${Math.abs(trendPercent)}%`
               : `-${Math.abs(trendPercent)}%`}
           </Trend>
-        </Value>
-        <Desc>{item?.desc || ''}</Desc>
+        </ValueWrapper>
+        <Desc>{item?.desc || ""}</Desc>
       </Left>
       <Icon $color={item?.color} $bg={item?.lightColor}>
         {item?.icon}

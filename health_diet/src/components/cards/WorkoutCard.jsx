@@ -1,6 +1,10 @@
-import { FitnessCenterRounded, TimelapseRounded } from '@mui/icons-material';
-import React from 'react';
-import styled from 'styled-components';
+import { FitnessCenterRounded, TimelapseRounded } from "@mui/icons-material";
+import React from "react";
+import styled from "styled-components";
+import Button from "../Button";
+import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { removeWorkout } from "../../redux/reducers/workoutSlice";
 
 const Card = styled.div`
   flex: 1;
@@ -21,7 +25,7 @@ const Category = styled.div`
   font-weight: 600;
   color: ${({ theme }) => theme.text_secondary};
   margin-bottom: 6px;
-  background-color: ${({ theme }) => theme.primary + '22'};
+  background-color: ${({ theme }) => theme.primary + "22"};
   padding: 4px 8px;
   border-radius: 4px;
 `;
@@ -36,7 +40,7 @@ const Name = styled.div`
 const Sets = styled.div`
   font-size: 16px;
   font-weight: 500;
-  color: ${({ theme }) => theme.text_primary + 'cc'};
+  color: ${({ theme }) => theme.text_primary + "cc"};
   margin-bottom: 12px;
 `;
 
@@ -50,58 +54,73 @@ const Details = styled.div`
   align-items: center;
   font-size: 14px;
   font-weight: 500;
-  color: ${({ theme }) => theme.text_primary + 'cc'};
+  color: ${({ theme }) => theme.text_primary + "cc"};
   margin-right: 16px;
   gap: 4px;
 `;
 
+const Footer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+`;
+
 const WorkoutCard = ({ workout }) => {
+  const dispatch = useDispatch();
+
   if (!workout) return null;
+
+  const handleDelete = async () => {
+    try {
+      await dispatch(removeWorkout(workout._id)).unwrap();
+      toast.success("Workout deleted!");
+    } catch (err) {
+      console.error("Error deleting workout:", err);
+      toast.error(err || "Failed to delete workout");
+    }
+  };
 
   return (
     <Card>
       {workout.category && <Category>#{workout.category}</Category>}
-
       {workout.workoutName && <Name>{workout.workoutName}</Name>}
-
       {Number.isFinite(workout.sets) && Number.isFinite(workout.reps) && (
         <Sets>
           Count: {workout.sets} sets × {workout.reps} reps
         </Sets>
       )}
-
       <Flex>
         {Number.isFinite(workout.weight) && (
           <Details>
-            <FitnessCenterRounded sx={{ fontSize: 16, color: '#555', mr: 1 }} />
-            {workout.weight} kg
+            <FitnessCenterRounded sx={{ fontSize: 16, color: "#555", mr: 1 }} />
+            Weight: {workout.weight} kg
           </Details>
         )}
         {Number.isFinite(workout.duration) && (
           <Details>
-            <TimelapseRounded sx={{ fontSize: 16, color: '#555', mr: 1 }} />
-            {workout.duration} min
+            <TimelapseRounded sx={{ fontSize: 16, color: "#555", mr: 1 }} />
+            Duration: {workout.duration} min
           </Details>
         )}
       </Flex>
-
       {Number.isFinite(workout.totalVolume) && workout.totalVolume > 0 && (
         <Details>Total Volume: {workout.totalVolume}</Details>
       )}
-
       {Number.isFinite(workout.caloriesBurned) && (
-        <Details>{workout.caloriesBurned} kcal</Details>
+        <Details>Calories Burned: {workout.caloriesBurned} kcal</Details>
       )}
-
       {workout.date && (
         <Details>
-          {new Date(workout.date).toLocaleDateString('en-US', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
+          {new Date(workout.date).toLocaleDateString("en-US", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
           })}
         </Details>
       )}
+      <Footer>
+        <Button text="Delete" small onClick={handleDelete} aria-label="Delete workout" />
+      </Footer>
     </Card>
   );
 };

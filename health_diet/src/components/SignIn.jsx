@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import TextInput from './TextInput';
 import Button from './Button';
 import { useDispatch } from 'react-redux';
-import { UserSignIn } from '../api';
+import { userSignIn } from '../api';
 import { loginSuccess } from '../redux/reducers/userSlice';
 
 const Container = styled.div`
@@ -59,7 +59,7 @@ function SignIn() {
     setButtonDisabled(true);
 
     try {
-      const res = await UserSignIn({ email, password });
+      const res = await userSignIn({ email, password });
       dispatch(loginSuccess(res.data));
       alert("Login Success");
     } catch (err) {

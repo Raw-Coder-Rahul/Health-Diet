@@ -7,9 +7,7 @@ import {
 export const counts = [
   {
     name: "Calories Burned",
-    icon: (
-      <LocalFireDepartmentRounded sx={{ color : "#EB9E34"}} />
-    ),
+    icon: <LocalFireDepartmentRounded sx={{ color: "#EB9E34" }} />,
     desc: "Total calories burned today",
     key: "totalCaloriesBurned",
     unit: "kcal",
@@ -18,8 +16,8 @@ export const counts = [
   },
   {
     name: "Workouts",
-    icon: <FitnessCenterRounded sx={{ color : "#4CAF50"}} />,
-    desc: "Total no of workouts this week",
+    icon: <FitnessCenterRounded sx={{ color: "#4CAF50" }} />,
+    desc: "Total number of workouts today",
     key: "totalWorkouts",
     unit: "count",
     color: "#4CAF50",
@@ -27,7 +25,7 @@ export const counts = [
   },
   {
     name: "Average Calories",
-    icon: <TimelineRounded sx={{ color : "#db1450ff"}} />,
+    icon: <TimelineRounded sx={{ color: "#db1450ff" }} />,
     desc: "Average calories burned per workout",
     key: "avgCaloriesBurnedPerWorkout",
     unit: "kcal",

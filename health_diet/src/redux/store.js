@@ -10,6 +10,8 @@ import {
   REGISTER,
 } from "redux-persist";
 import userReducer from "./reducers/userSlice";
+import mealReducer from "./reducers/mealSlice";
+import workoutReducer from "./reducers/workoutSlice"; // ✅ new slice
 import createWebStorage from "redux-persist/es/storage/createWebStorage";
 
 const createNoopStorage = () => ({
@@ -31,11 +33,13 @@ const persistConfig = {
   key: "healthDiet",
   version: 1,
   storage,
-  whitelist: ["user"],
+  whitelist: ["user"], // ✅ only persist user
 };
 
 const rootReducer = combineReducers({
   user: userReducer,
+  meals: mealReducer,
+  workouts: workoutReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

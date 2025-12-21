@@ -19,7 +19,7 @@ const BaseInput = styled.input`
   border: 1px solid ${({ theme }) => theme.border || '#d1d5db'};
   border-radius: 8px;
   background-color: ${({ theme }) => theme.input_background || '#f9fafb'};
-  color: ${({ theme }) => theme.text_primary};
+  color: ${({ theme }) => theme.black};
   transition: all 0.2s ease;
 
   &:hover {

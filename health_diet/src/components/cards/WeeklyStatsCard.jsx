@@ -12,6 +12,7 @@ const Card = styled.div`
   gap: 6px;
   box-shadow: 1px 6px 20px 0px ${({ theme }) => theme.shadow + 15};
   flex-direction: column;
+  background-color: #1f22a4ff;
 `;
 
 const Title = styled.div`

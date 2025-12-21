@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
-import WorkoutCard from '../components/cards/WorkoutCard';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
-import dayjs from 'dayjs';
-import CircularProgress from '@mui/material/CircularProgress';
-import { getWorkoutsByDate } from '../api';
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
+import WorkoutCard from "../components/cards/WorkoutCard";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
+import dayjs from "dayjs";
+import CircularProgress from "@mui/material/CircularProgress";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchWorkoutsByDate } from "../redux/reducers/workoutSlice";
 
 const Container = styled.div`
   flex: 1;
@@ -14,12 +15,13 @@ const Container = styled.div`
   display: flex;
   justify-content: center;
   padding: 22px 0px;
-  overflow-y: scroll;
+  overflow-y: auto;
 `;
 
 const Wrapper = styled.div`
   flex: 1;
   max-width: 1600px;
+  height: 100vh;
   display: flex;
   gap: 22px;
   padding: 0px 16px;
@@ -80,59 +82,44 @@ const SecTitle = styled.div`
 `;
 
 const Workouts = () => {
+  const dispatch = useDispatch();
   const [selectedDate, setSelectedDate] = useState(dayjs());
-  const [workouts, setWorkouts] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  const fetchWorkouts = async (date) => {
-    try {
-      setLoading(true);
-      const dateStr = date.format('YYYY-MM-DD');
-      const res = await getWorkoutsByDate(dateStr);
-      setWorkouts(res.data?.todayWorkouts || []);
-    } catch (err) {
-      console.error("Error fetching workouts:", err);
-      setWorkouts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { items: workouts, loading, error } = useSelector((state) => state.workouts);
 
   useEffect(() => {
-    fetchWorkouts(selectedDate);
+    const dateStr = selectedDate.format("YYYY-MM-DD");
+    dispatch(fetchWorkoutsByDate(dateStr));
   }, [selectedDate]);
 
   return (
     <Container>
       <Wrapper>
-        {/* Left side: calendar */}
         <Left>
           <Title>Select Date</Title>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DateCalendar
               value={selectedDate}
-              onChange={(newDate) => setSelectedDate(newDate)}
+              onChange={(newDate) => newDate && setSelectedDate(newDate)}
             />
           </LocalizationProvider>
         </Left>
 
-        {/* Right side: workouts list */}
         <Right>
           <Section>
-            <SecTitle>{selectedDate.format('DD MMM YYYY')} Workouts</SecTitle>
+            <SecTitle>{selectedDate.format("DD MMM YYYY")} Workouts</SecTitle>
             {loading ? (
               <CircularProgress />
             ) : (
               <CardWrapper>
                 {workouts.length > 0 ? (
-                  workouts.map((w) => (
-                    <WorkoutCard key={w._id} workout={w} />
-                  ))
+                  workouts.map((w) => <WorkoutCard key={w._id} workout={w} />)
                 ) : (
                   <p>No workouts found</p>
                 )}
               </CardWrapper>
             )}
+            {error && <p style={{ color: "red" }}>Error: {error.message || error}</p>}
           </Section>
         </Right>
       </Wrapper>

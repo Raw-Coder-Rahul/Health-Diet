@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import AddMeal from '../components/AddMeal';
-import MealCard from '../components/cards/MealCard';
-import NutrientChartCard from '../components/cards/NutrientChartCard';
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
+import { useDispatch, useSelector } from "react-redux";
+import AddMeal from "../components/AddMeal";
+import MealCard from "../components/cards/MealCard";
+import NutrientChartCard from "../components/cards/NutrientChartCard";
+import {
+  fetchMealsByDate,
+  createMeal,
+  removeMeal,
+} from "../redux/reducers/mealSlice";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Container = styled.div`
   flex: 1;
@@ -63,8 +70,9 @@ const Toggle = styled.div`
 const ToggleButton = styled.button`
   padding: 8px 16px;
   border: none;
-  background-color: ${({ active, theme }) => (active ? theme.primary : theme.bg_secondary)};
-  color: ${({ active, theme }) => (active ? '#fff' : theme.text_primary)};
+  background-color: ${({ active, theme }) =>
+    active ? theme.primary : theme.bg_secondary};
+  color: ${({ active, theme }) => (active ? "#fff" : theme.text_primary)};
   border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
@@ -82,44 +90,92 @@ const CardWrapper = styled.div`
 `;
 
 const Meals = () => {
-  const [meal, setMeal] = useState('');
-  const [type, setType] = useState('veg');
+  const dispatch = useDispatch();
+  const { items: todayMeals, loading, error } = useSelector((state) => state.meals);
 
-  const nutrientData = {
-    veg: [
-      { id: 0, value: 60, label: 'Protein' },
-      { id: 1, value: 30, label: 'Fat' },
-      { id: 2, value: 40, label: 'Vitamin' },
-      { id: 3, value: 20, label: 'Glucose' },
-    ],
-    nonveg: [
-      { id: 0, value: 90, label: 'Protein' },
-      { id: 1, value: 50, label: 'Fat' },
-      { id: 2, value: 25, label: 'Vitamin' },
-      { id: 3, value: 35, label: 'Glucose' },
-    ],
+  const [type, setType] = useState("veg");
+
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    dispatch(fetchMealsByDate(today));
+  }, [dispatch]);
+
+  // --- Handle add/delete ---
+  const handleMealAdded = (mealData) => {
+    dispatch(createMeal(mealData));
   };
+  const handleMealDeleted = (mealId) => {
+    dispatch(removeMeal(mealId));
+  };
+
+  // --- Filter meals by type ---
+  const filteredMeals = todayMeals.filter((meal) => meal.type === type);
+
+  // --- Aggregate nutrients dynamically for selected type ---
+  const nutrientTotals = filteredMeals.reduce(
+    (acc, meal) => {
+      acc.calories += Number(meal.calories) || 0;
+      acc.protein += Number(meal.protein) || 0;
+      acc.fat += Number(meal.fat) || 0;
+      acc.vitamins += Number(meal.vitamins) || 0;
+      acc.carbs += Number(meal.carbs) || 0;
+      return acc;
+    },
+    { calories: 0, protein: 0, fat: 0, vitamins: 0, carbs: 0 }
+  );
+
+  const chartData = [
+    { id: 0, value: nutrientTotals.calories, label: "Calories", color: "#F44336" },
+    { id: 1, value: nutrientTotals.protein, label: "Protein", color: "#4CAF50" },
+    { id: 2, value: nutrientTotals.fat, label: "Fat", color: "#FF9800" },
+    { id: 3, value: nutrientTotals.vitamins, label: "Vitamins", color: "#2196F3" },
+    { id: 4, value: nutrientTotals.carbs, label: "Carbs", color: "#9C27B0" },
+  ];
 
   return (
     <Container>
       <Wrapper>
+        {/* Left side: Add Meal */}
         <Left>
           <Title>Add Meal</Title>
-          <AddMeal meal={meal} setMeal={setMeal} />
+          <AddMeal onMealAdded={handleMealAdded} />
         </Left>
+
+        {/* Right side: Nutrients + Meals */}
         <Right>
-          <Title>{type === 'veg' ? 'Veg Meal Nutrient Breakdown' : 'Non-Veg Meal Nutrient Breakdown'}</Title>
+          <Title>
+            {type === "veg" ? "Veg Meal Nutrient Breakdown" : "Non-Veg Meal Nutrient Breakdown"}
+          </Title>
           <Toggle>
-            <ToggleButton active={type === 'veg'} onClick={() => setType('veg')}>Veg</ToggleButton>
-            <ToggleButton active={type === 'nonveg'} onClick={() => setType('nonveg')}>Non-Veg</ToggleButton>
+            <ToggleButton active={type === "veg"} onClick={() => setType("veg")}>
+              Veg
+            </ToggleButton>
+            <ToggleButton active={type === "nonveg"} onClick={() => setType("nonveg")}>
+              Non-Veg
+            </ToggleButton>
           </Toggle>
-          <NutrientChartCard chartData={nutrientData[type]} />
-          <Title>Today's Meals</Title>
+
+          {loading ? (
+            <CircularProgress />
+          ) : (
+            <NutrientChartCard chartData={chartData} />
+          )}
+
+          <Title>Today's {type === "veg" ? "Veg" : "Non-Veg"} Meals</Title>
           <CardWrapper>
-            <MealCard type="veg" />
-            <MealCard type="nonveg" />
-            <MealCard type="veg" />
+            {filteredMeals.length > 0 ? (
+              filteredMeals.map((meal) => (
+                <MealCard
+                  key={meal._id}
+                  meal={meal}
+                  onMealDeleted={handleMealDeleted}
+                />
+              ))
+            ) : (
+              <p>No {type === "veg" ? "Veg" : "Non-Veg"} meals logged today.</p>
+            )}
           </CardWrapper>
+          {error && <p style={{ color: "red" }}>Error: {error}</p>}
         </Right>
       </Wrapper>
     </Container>

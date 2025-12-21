@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import TextInput from './TextInput';
 import Button from './Button';
 import { useDispatch } from 'react-redux';
-import { UserSignup } from '../api';   // ✅ use your API helper
+import { userSignup } from '../api';
 import { loginSuccess } from '../redux/reducers/userSlice';
 
 const Wrapper = styled.div`
@@ -125,8 +125,7 @@ function SignUp() {
         data.append("profileImage", form.profileImage);
       }
 
-      const res = await UserSignup(data);
-
+      const res = await userSignup(data);
       dispatch(loginSuccess(res.data));
 
       if (res.data.token) {

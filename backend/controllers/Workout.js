@@ -1,7 +1,7 @@
-import mongoose from 'mongoose';
-import Workout from '../models/Workout.js';
-import User from '../models/User.js';
-import { createError } from '../error.js';
+import mongoose from "mongoose";
+import Workout from "../models/Workout.js";
+import User from "../models/User.js";
+import { createError } from "../error.js";
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -31,13 +31,13 @@ const calculateCaloriesBurned = ({ duration = 0, weight = 70 }) => {
   return Math.round(durationInMinutes * caloriesBurnedPerMinute * (weightInKg / 70));
 };
 
-export const getProfile = async (req, res, next) => {
+export const getAllWorkouts = async (req, res, next) => {
   try {
     const userId = req.userId;
-    if (!userId || !isValidObjectId(userId)) return next(createError(401, 'Unauthorized'));
+    if (!userId || !isValidObjectId(userId)) return next(createError(401, "Unauthorized"));
 
     const workouts = await Workout.find({ userId }).sort({ date: -1 });
-    res.status(200).json(workouts);
+    res.status(200).json({ success: true, workouts });
   } catch (err) {
     next(err);
   }
@@ -46,15 +46,15 @@ export const getProfile = async (req, res, next) => {
 export const getWorkoutsByDate = async (req, res, next) => {
   try {
     const userId = req.userId;
-    if (!userId || !isValidObjectId(userId)) return next(createError(401, 'Unauthorized'));
+    if (!userId || !isValidObjectId(userId)) return next(createError(401, "Unauthorized"));
 
     const userExists = await User.exists({ _id: userId });
-    if (!userExists) return next(createError(404, 'User not found'));
+    if (!userExists) return next(createError(404, "User not found"));
 
-    const dateStr = req.query.date; // expected: YYYY-MM-DD
+    const dateStr = req.query.date;
     const queryDate = dateStr ? new Date(dateStr) : new Date();
     if (Number.isNaN(queryDate.getTime())) {
-      return next(createError(400, 'Invalid date'));
+      return next(createError(400, "Invalid date"));
     }
 
     const { start, end } = getDayBounds(queryDate);
@@ -69,7 +69,7 @@ export const getWorkoutsByDate = async (req, res, next) => {
       0
     );
 
-    res.status(200).json({ todayWorkouts, totalCaloriesBurned });
+    res.status(200).json({ success: true, todayWorkouts, totalCaloriesBurned });
   } catch (err) {
     next(err);
   }
@@ -78,8 +78,11 @@ export const getWorkoutsByDate = async (req, res, next) => {
 export const addWorkout = async (req, res, next) => {
   try {
     const userId = req.userId;
-    if (!userId || !isValidObjectId(userId)) return next(createError(401, "Unauthorized"));
+    if (!userId || !isValidObjectId(userId)) {
+      return next(createError(401, "Unauthorized"));
+    }
 
+    const body = req.body || {};
     const {
       category,
       workoutName,
@@ -90,14 +93,15 @@ export const addWorkout = async (req, res, next) => {
       caloriesBurned,
       date,
       workoutString,
-    } = req.body;
+    } = body;
 
+    // --- Structured input path ---
     if (category && workoutName) {
-      const setsNum = Number(sets);
-      const repsNum = Number(reps);
-      const weightNum = Number(weight);
-      const durationNum = Number(duration);
-      const caloriesNum = Number(caloriesBurned);
+      const setsNum = Number(sets) || 0;
+      const repsNum = Number(reps) || 0;
+      const weightNum = Number(weight) || 0;
+      const durationNum = Number(duration) || 0;
+      const caloriesNum = Number(caloriesBurned) || 0;
 
       const safeWeight = Number.isFinite(weightNum) ? weightNum : 70;
       const workoutDate = date ? new Date(date) : new Date();
@@ -111,36 +115,39 @@ export const addWorkout = async (req, res, next) => {
       });
 
       if (existingWorkout) {
-        existingWorkout.sets += Number.isFinite(setsNum) ? setsNum : 0;
-        existingWorkout.reps += Number.isFinite(repsNum) ? repsNum : 0;
-        existingWorkout.duration += Number.isFinite(durationNum) ? durationNum : 0;
-        existingWorkout.weight = Number.isFinite(weightNum) ? weightNum : existingWorkout.weight;
-        existingWorkout.caloriesBurned += Number.isFinite(caloriesNum)
-          ? caloriesNum
-          : calculateCaloriesBurned({ duration: durationNum, weight: safeWeight });
+        existingWorkout.sets += setsNum;
+        existingWorkout.reps += repsNum;
+        existingWorkout.duration += durationNum;
+        existingWorkout.weight = weightNum || existingWorkout.weight;
+        existingWorkout.caloriesBurned +=
+          caloriesNum > 0
+            ? caloriesNum
+            : calculateCaloriesBurned({ duration: durationNum, weight: safeWeight });
 
         await existingWorkout.save();
-        return res.status(200).json(existingWorkout);
+        return res.status(200).json({ success: true, workout: existingWorkout });
       }
 
       const payload = {
         userId,
         category: String(category).trim(),
         workoutName: String(workoutName).trim(),
-        sets: Number.isFinite(setsNum) ? setsNum : 0,
-        reps: Number.isFinite(repsNum) ? repsNum : 0,
-        weight: Number.isFinite(weightNum) ? weightNum : 0,
-        duration: Number.isFinite(durationNum) ? durationNum : 0,
-        caloriesBurned: Number.isFinite(caloriesNum)
-          ? caloriesNum
-          : calculateCaloriesBurned({ duration: durationNum, weight: safeWeight }),
+        sets: setsNum,
+        reps: repsNum,
+        weight: weightNum,
+        duration: durationNum,
+        caloriesBurned:
+          caloriesNum > 0
+            ? caloriesNum
+            : calculateCaloriesBurned({ duration: durationNum, weight: safeWeight }),
         date: workoutDate,
       };
 
       const created = await Workout.create(payload);
-      return res.status(201).json(created);
+      return res.status(201).json({ success: true, workout: created });
     }
 
+    // --- workoutString path ---
     if (!workoutString) {
       return next(createError(400, "Provide either structured workout fields or workoutString"));
     }
@@ -152,10 +159,10 @@ export const addWorkout = async (req, res, next) => {
 
     const categoryParsed = lines[0].substring(1).trim();
     const workoutNameParsed = lines[1];
-    const durationParsed = parseInt(lines[2].replace(/[^0-9]/g, ""), 10);
-    const setsParsed = parseInt(lines[3].replace(/[^0-9]/g, ""), 10);
-    const repsParsed = parseInt(lines[4].replace(/[^0-9]/g, ""), 10);
-    const weightParsed = parseInt(lines[5].replace(/[^0-9]/g, ""), 10);
+    const durationParsed = parseInt(lines[2].replace(/[^0-9]/g, ""), 10) || 0;
+    const setsParsed = parseInt(lines[3].replace(/[^0-9]/g, ""), 10) || 0;
+    const repsParsed = parseInt(lines[4].replace(/[^0-9]/g, ""), 10) || 0;
+    const weightParsed = parseInt(lines[5].replace(/[^0-9]/g, ""), 10) || 0;
 
     if (!categoryParsed || !workoutNameParsed) {
       return next(createError(400, "Category and workoutName are required"));
@@ -173,33 +180,33 @@ export const addWorkout = async (req, res, next) => {
     });
 
     if (existingWorkout) {
-      existingWorkout.sets += Number.isFinite(setsParsed) ? setsParsed : 0;
-      existingWorkout.reps += Number.isFinite(repsParsed) ? repsParsed : 0;
-      existingWorkout.duration += Number.isFinite(durationParsed) ? durationParsed : 0;
-      existingWorkout.weight = Number.isFinite(weightParsed) ? weightParsed : existingWorkout.weight;
+      existingWorkout.sets += setsParsed;
+      existingWorkout.reps += repsParsed;
+      existingWorkout.duration += durationParsed;
+      existingWorkout.weight = weightParsed || existingWorkout.weight;
       existingWorkout.caloriesBurned += calculateCaloriesBurned({
         duration: durationParsed,
         weight: safeWeightParsed,
       });
 
       await existingWorkout.save();
-      return res.status(200).json(existingWorkout);
+      return res.status(200).json({ success: true, workout: existingWorkout });
     }
 
     const payload = {
       userId,
       category: categoryParsed,
       workoutName: workoutNameParsed,
-      sets: Number.isFinite(setsParsed) ? setsParsed : 0,
-      reps: Number.isFinite(repsParsed) ? repsParsed : 0,
-      weight: Number.isFinite(weightParsed) ? weightParsed : 0,
-      duration: Number.isFinite(durationParsed) ? durationParsed : 0,
+      sets: setsParsed,
+      reps: repsParsed,
+      weight: weightParsed,
+      duration: durationParsed,
       caloriesBurned: calculateCaloriesBurned({ duration: durationParsed, weight: safeWeightParsed }),
       date: workoutDate,
     };
 
     const created = await Workout.create(payload);
-    return res.status(201).json(created);
+    return res.status(201).json({ success: true, workout: created });
   } catch (err) {
     next(err);
   }
@@ -208,14 +215,13 @@ export const addWorkout = async (req, res, next) => {
 export const getUserDashboardStats = async (req, res, next) => {
   try {
     const userId = req.userId;
-    if (!userId || !isValidObjectId(userId)) return next(createError(401, 'Unauthorized'));
+    if (!userId || !isValidObjectId(userId)) return next(createError(401, "Unauthorized"));
 
-    const user = await User.findById(userId).select('-password');
-    if (!user) return next(createError(404, 'User not found'));
+    const user = await User.findById(userId).select("-password");
+    if (!user) return next(createError(404, "User not found"));
 
     const today = new Date();
     const { start: startToday, end: endToday } = getDayBounds(today);
-
     const userObjectId = new mongoose.Types.ObjectId(userId);
 
     const todayAgg = await Workout.aggregate([
@@ -223,7 +229,7 @@ export const getUserDashboardStats = async (req, res, next) => {
       {
         $group: {
           _id: null,
-          totalCaloriesBurned: { $sum: { $ifNull: ['$caloriesBurned', 0] } },
+          totalCaloriesBurned: { $sum: { $ifNull: ["$caloriesBurned", 0] } },
           totalWorkouts: { $sum: 1 },
         },
       },
@@ -239,8 +245,8 @@ export const getUserDashboardStats = async (req, res, next) => {
       { $match: { userId: userObjectId, date: { $gte: startToday, $lt: endToday } } },
       {
         $group: {
-          _id: '$category',
-          totalCaloriesBurned: { $sum: { $ifNull: ['$caloriesBurned', 0] } },
+          _id: "$category",
+          totalCaloriesBurned: { $sum: { $ifNull: ["$caloriesBurned", 0] } },
         },
       },
       { $sort: { totalCaloriesBurned: -1 } },
@@ -262,15 +268,16 @@ export const getUserDashboardStats = async (req, res, next) => {
       const { start, end } = getDayBounds(d);
 
       const dayAgg = await Workout.aggregate([
-        { $match: {
+        {
+          $match: {
             userId: userObjectId,
-            date: { $gte: start, $lt: end } 
-          }
+            date: { $gte: start, $lt: end },
+          },
         },
         {
           $group: {
             _id: null,
-            totalCaloriesBurned: { $sum: { $ifNull: ['$caloriesBurned', 0] } },
+            totalCaloriesBurned: { $sum: { $ifNull: ["$caloriesBurned", 0] } },
             totalWorkouts: { $sum: 1 },
           },
         },
@@ -295,6 +302,50 @@ export const getUserDashboardStats = async (req, res, next) => {
         pieChartData,
       },
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateWorkout = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const workoutId = req.params.id;
+
+    if (!userId || !isValidObjectId(userId)) return next(createError(401, "Unauthorized"));
+    if (!isValidObjectId(workoutId)) return next(createError(400, "Invalid workout ID"));
+
+    const updated = await Workout.findOneAndUpdate(
+      { _id: workoutId, userId },
+      { $set: req.body },
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) return next(createError(404, "Workout not found"));
+    res.status(200).json({ success: true, workout: updated });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteWorkout = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const workoutId = req.params.id;
+
+    if (!userId || !isValidObjectId(userId)) {
+      return next(createError(401, "Unauthorized"));
+    }
+    if (!isValidObjectId(workoutId)) {
+      return next(createError(400, "Invalid workout ID"));
+    }
+
+    const workout = await Workout.findOneAndDelete({ _id: workoutId, userId });
+    if (!workout) {
+      return next(createError(404, "Workout not found"));
+    }
+
+    res.status(200).json({ success: true, deletedId: workout._id });
   } catch (err) {
     next(err);
   }

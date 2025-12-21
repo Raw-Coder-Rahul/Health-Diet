@@ -63,8 +63,8 @@ const MobileIcon = styled.div`
   display: none;
   cursor: pointer;
 
-  @media screen and (max-width: 920px) {
-    display: ${({ isOpen }) => (isOpen ? 'none' : 'flex')};
+  @media screen and (max-width: 1000px) {
+    display: ${({ $isOpen }) => ($isOpen ? 'none' : 'flex')};
     align-items: center;
     justify-content: center;
     color: ${({ theme }) => theme.text_primary};
@@ -74,7 +74,7 @@ const MobileIcon = styled.div`
 const SideDrawer = styled.div`
   position: fixed;
   top: 80px;
-  left: ${({ isOpen }) => (isOpen ? '0' : '-100%')};
+  left: ${({ $isOpen }) => ($isOpen ? '0' : '-100%')};
   width: 260px;
   height: calc(100vh - 80px);
   background-color: ${({ theme }) => theme.text_secondary};
@@ -86,7 +86,7 @@ const SideDrawer = styled.div`
   transition: left 0.3s ease-in-out;
   z-index: 999;
 
-  @media screen and (min-width: 921px) {
+  @media screen and (min-width: 1000px) {
     display: none;
   }
 `;
@@ -127,7 +127,7 @@ const NavMenu = styled.ul`
   gap: 32px;
   list-style: none;
 
-  @media screen and (max-width: 920px) {
+  @media screen and (max-width: 1000px) {
     display: none;
   }
 `;
@@ -137,7 +137,7 @@ const UserContainer = styled.div`
   align-items: center;
   gap: 12px;
   
-  @media screen and (max-width: 920px) {
+  @media screen and (max-width: 1000px) {
     position: absolute;
     top: 20px;
     right: 24px;
@@ -171,7 +171,7 @@ const TextButton = styled.div`
   }
 
   &.mobile-logout {
-    @media screen and (min-width: 921px) {
+    @media screen and (min-width: 1000px) {
       display: none;
     }
   }
@@ -195,7 +195,7 @@ function Navbar({ currentUser }) {
 
         <NavLogo to="/">
           <Logo src={LogoImg} alt="Logo" />
-          HealthDiet
+          Health&Diet
         </NavLogo>
       </LeftGroup>
 
@@ -310,7 +310,7 @@ function Navbar({ currentUser }) {
       </DrawerLinks>
       <SidebarLogo to="/">
         <Logo src={LogoImg} alt="Health&Diet Logo" />
-        FitnessDiet
+        Health&Diet
       </SidebarLogo>
     </SideDrawer>
   </>

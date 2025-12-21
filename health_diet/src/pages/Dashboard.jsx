@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import styled from "styled-components";
+import { useDispatch, useSelector } from "react-redux";
 import { counts } from "../utills/data";
 import CountsCard from "../components/cards/CountsCard";
 import WeeklyStatsCard from "../components/cards/WeeklyStatsCard";
@@ -10,7 +11,17 @@ import AddMeal from "../components/AddMeal";
 import MealCard from "../components/cards/MealCard";
 import NutrientChartCard from "../components/cards/NutrientChartCard";
 import CircularProgress from "@mui/material/CircularProgress";
-import { getWorkoutStats, getWorkoutsByDate } from "../api";
+import {
+  fetchMealsByDate,
+  createMeal,
+  removeMeal,
+} from "../redux/reducers/mealSlice";
+import {
+  fetchWorkoutStats,
+  fetchWorkoutsByDate,
+  createWorkout,
+  removeWorkout,
+} from "../redux/reducers/workoutSlice";
 
 const Container = styled.div`
   flex: 1;
@@ -18,7 +29,7 @@ const Container = styled.div`
   display: flex;
   justify-content: center;
   padding: 22px 0px;
-  overflow-y: scroll;
+  overflow-y: auto;
 `;
 
 const Wrapper = styled.div`
@@ -67,120 +78,134 @@ const CardWrapper = styled.div`
 `;
 
 const Dashboard = () => {
-  const [meal, setMeal] = useState("");
-  const [loadingStats, setLoadingStats] = useState(false);
-  const [loadingWorkouts, setLoadingWorkouts] = useState(false);
-  const [stats, setStats] = useState(null);
-  const [todayWorkouts, setTodayWorkouts] = useState([]);
+  const dispatch = useDispatch();
 
-  const fetchStats = async () => {
-    try {
-      setLoadingStats(true);
-      const res = await getWorkoutStats();
-      setStats(res.data?.stats || null);
-    } catch (err) {
-      console.error("Error fetching stats:", err);
-    } finally {
-      setLoadingStats(false);
-    }
-  };
+  const {
+    items: todayMeals,
+    loading: loadingMeals,
+    error: mealError,
+  } = useSelector((state) => state.meals);
 
-  const fetchTodayWorkouts = async () => {
-    try {
-      setLoadingWorkouts(true);
-      const today = new Date().toISOString().split("T")[0];
-      const res = await getWorkoutsByDate(today);
-      setTodayWorkouts(res.data?.todayWorkouts || []);
-    } catch (err) {
-      console.error("Error fetching today's workouts:", err);
-    } finally {
-      setLoadingWorkouts(false);
-    }
-  };
+  const {
+    stats,
+    items: todayWorkouts,
+    loading: loadingWorkouts,
+    error: workoutError,
+  } = useSelector((state) => state.workouts);
 
-  const refreshDashboard = async () => {
-    await Promise.all([fetchStats(), fetchTodayWorkouts()]);
+  const refreshDashboard = () => {
+    const today = new Date().toISOString().split("T")[0];
+    dispatch(fetchWorkoutStats());
+    dispatch(fetchWorkoutsByDate(today));
+    dispatch(fetchMealsByDate(today));
   };
 
   useEffect(() => {
     refreshDashboard();
   }, []);
 
+  const handleMealAdded = (mealData) => dispatch(createMeal(mealData));
+  const handleMealDeleted = (mealId) => dispatch(removeMeal(mealId));
+  const handleWorkoutAdded = (workoutData) => dispatch(createWorkout(workoutData));
+  const handleWorkoutDeleted = (workoutId) => dispatch(removeWorkout(workoutId));
+
+  const nutrientTotals = todayMeals.reduce(
+    (acc, meal) => {
+      acc.calories += Number(meal.calories) || 0;
+      acc.protein += Number(meal.protein) || 0;
+      acc.fat += Number(meal.fat) || 0;
+      acc.vitamins += Number(meal.vitamins) || 0;
+      acc.carbs += Number(meal.carbs) || 0;
+      return acc;
+    },
+    { calories: 0, protein: 0, fat: 0, vitamins: 0, carbs: 0 }
+  );
+
+  const loading = loadingMeals || loadingWorkouts;
+
   return (
     <Container>
       <Wrapper>
         <Title>Dashboard</Title>
 
-        {loadingStats || loadingWorkouts ? (
+        {loading ? (
           <CircularProgress />
         ) : (
           <>
-            {/* Counts cards */}
             <FlexWrap>
-              {counts.map((item, idx) => (
-                <CountsCard key={idx} item={item} data={stats} />
+              {counts.map((item) => (
+                <CountsCard key={item.id || item.label} item={item} data={stats} />
               ))}
             </FlexWrap>
 
-            {/* Weekly bar chart + Category pie chart */}
             <FlexWrap>
               {stats?.weekly && <WeeklyStatsCard data={stats.weekly} />}
               {stats?.pieChartData && <CategoryChartCard data={stats} />}
             </FlexWrap>
 
-            {/* Add workout form */}
             <FlexWrap>
-              <AddWorkout onWorkoutAdded={refreshDashboard} />
+              <AddWorkout onWorkoutAdded={handleWorkoutAdded} />
             </FlexWrap>
 
-            {/* Today's workouts list */}
             <Section>
               <Title>Today's Workouts</Title>
               <CardWrapper>
                 {todayWorkouts.length > 0 ? (
                   todayWorkouts.map((w) => (
-                    <WorkoutCard key={w._id} workout={w} />
+                    <WorkoutCard
+                      key={w._id}
+                      workout={w}
+                      onWorkoutDeleted={handleWorkoutDeleted}
+                    />
                   ))
                 ) : (
                   <p>No workouts logged today.</p>
                 )}
               </CardWrapper>
+              {workoutError && (
+                <p style={{ color: "red" }}>
+                  Error: {workoutError.message || workoutError}
+                </p>
+              )}
             </Section>
 
-            {/* Add meal form */}
             <FlexWrap>
-              <AddMeal meal={meal} setMeal={setMeal} />
+              <AddMeal onMealAdded={handleMealAdded} />
             </FlexWrap>
 
-            {/* Nutrient charts */}
             <FlexWrap>
               <NutrientChartCard
-                title="Veg Meal Nutrient Breakdown"
+                title="Today's Nutrient Breakdown"
                 chartData={[
-                  { id: 0, value: 60, label: "Protein" },
-                  { id: 1, value: 30, label: "Fat" },
-                  { id: 2, value: 40, label: "Vitamin" },
-                  { id: 3, value: 20, label: "Glucose" },
-                ]}
-              />
-              <NutrientChartCard
-                title="Non-Veg Meal Nutrient Breakdown"
-                chartData={[
-                  { id: 0, value: 90, label: "Protein" },
-                  { id: 1, value: 50, label: "Fat" },
-                  { id: 2, value: 25, label: "Vitamin" },
-                  { id: 3, value: 35, label: "Glucose" },
+                  { id: 0, value: nutrientTotals.calories, label: "Calories", color: "#F44336" },
+                  { id: 1, value: nutrientTotals.protein, label: "Protein", color: "#4CAF50" },
+                  { id: 2, value: nutrientTotals.fat, label: "Fat", color: "#FF9800" },
+                  { id: 3, value: nutrientTotals.vitamins, label: "Vitamins", color: "#2196F3" },
+                  { id: 4, value: nutrientTotals.carbs, label: "Carbs", color: "#9C27B0" },
                 ]}
               />
             </FlexWrap>
 
-            {/* Today's meals */}
             <Section>
               <Title>Today's Meals</Title>
               <CardWrapper>
-                <MealCard type="veg" />
-                <MealCard type="nonveg" />
+                {todayMeals.length > 0 ? (
+                  todayMeals.map((meal) => (
+                    <MealCard
+                      key={meal._id}
+                      meal={meal}
+                      onMealDeleted={handleMealDeleted}
+                    />
+                  ))
+                ) : (
+                  <p>No meals logged today.</p>
+                )}
               </CardWrapper>
+              {mealError && (
+                <p style={{ color: "red" }}>
+                  Error: {mealError.message || mealError}
+                </p>
+              )}
             </Section>
           </>
         )}

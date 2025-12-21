@@ -1,17 +1,21 @@
-import express from 'express';
+import express from "express";
+import { verifyToken } from "../middlewares/auth.js";
 import {
-  getProfile,          // returns all workouts for a user
+  getAllWorkouts,
   getWorkoutsByDate,
   addWorkout,
-  getUserDashboardStats
-} from '../controllers/Workout.js';
-import { verifyToken } from '../middlewares/auth.js';
+  getUserDashboardStats,
+  deleteWorkout,
+  updateWorkout,
+} from "../controllers/Workout.js";
 
 const router = express.Router();
 
-router.get('/all', verifyToken, getProfile);
-router.get('/date', verifyToken, getWorkoutsByDate); 
-router.post('/add', verifyToken, addWorkout);
-router.get('/stats', verifyToken, getUserDashboardStats);
+router.get("/all", verifyToken, getAllWorkouts);
+router.get("/date", verifyToken, getWorkoutsByDate);
+router.post("/add", verifyToken, addWorkout);
+router.get("/stats", verifyToken, getUserDashboardStats);
+router.put("/:id", verifyToken, updateWorkout);
+router.delete("/:id", verifyToken, deleteWorkout);
 
 export default router;

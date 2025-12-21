@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import styled from 'styled-components';
-import LogoImage from '../../public/images/my_healthy_plate_inarticle_400.jpg';
-import AuthImage from '../../public/images/my_healthy_plate_inarticle_400.jpg';
-import SignIn from '../components/SignIn';
-import SignUp from '../components/SignUp';
+import React, { useState } from "react";
+import styled from "styled-components";
+import LogoImage from "../../public/images/my_healthy_plate_inarticle_400.jpg";
+import AuthImage from "../../public/images/my_healthy_plate_inarticle_400.jpg";
+import SignIn from "../components/SignIn";
+import SignUp from "../components/SignUp";
 
 const Container = styled.div`
   height: 100vh;
@@ -12,6 +12,8 @@ const Container = styled.div`
   color: ${({ theme }) => theme.text_primary};
   border-radius: 8px;
   box-shadow: ${({ theme }) => theme.shadow};
+  overflow: hidden;
+
   @media (max-width: 768px) {
     flex-direction: column;
   }
@@ -20,6 +22,7 @@ const Container = styled.div`
 const Left = styled.div`
   flex: 1;
   position: relative;
+
   @media (max-width: 768px) {
     display: none;
   }
@@ -39,6 +42,7 @@ const Image = styled.img`
   position: relative;
   width: 100%;
   height: 100%;
+  object-fit: cover;
   border-radius: 8px;
 `;
 
@@ -48,9 +52,14 @@ const Right = styled.div`
   display: flex;
   flex-direction: column;
   padding: 40px;
-  gap: 16px;
+  gap: 24px;
   align-items: center;
   justify-content: center;
+
+  @media (max-width: 480px) {
+    padding: 20px;
+    gap: 16px;
+  }
 `;
 
 const Text = styled.div`
@@ -58,42 +67,60 @@ const Text = styled.div`
   text-align: center;
   color: ${({ theme }) => theme.text_secondary};
   margin-top: 16px;
+
   @media (max-width: 480px) {
     font-size: 14px;
   }
 `;
 
-const TextButton = styled.span`
+const TextButton = styled.button`
+  background: none;
+  border: none;
   padding: 5px;
   color: ${({ theme }) => theme.primary};
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
   transition: color 0.3s ease;
+
+  &:hover {
+    color: ${({ theme }) => theme.primary_hover || theme.primary};
+  }
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
 `;
 
 const Authentication = () => {
-    const [isLogin, setIsLogin] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+
   return (
     <Container>
+      {/* Left side with illustration */}
       <Left>
-        <Logo src={LogoImage} alt="Health&Diet" />
+        <Logo src={LogoImage} alt="Health & Diet Logo" />
         <Image src={AuthImage} alt="Authentication Illustration" />
       </Left>
+
+      {/* Right side with forms */}
       <Right>
-        {!isLogin ? (
+        {isLogin ? (
           <>
             <SignIn />
-            <Text>Don't have an account?
-              <TextButton onClick={() => setIsLogin(true)}>
+            <Text>
+              Don&apos;t have an account?{" "}
+              <TextButton onClick={() => setIsLogin(false)}>
                 Sign Up
               </TextButton>
             </Text>
-          </>) : ( 
+          </>
+        ) : (
           <>
             <SignUp />
-            <Text>Already have an account?
-              <TextButton onClick={() => setIsLogin(false)}>
+            <Text>
+              Already have an account?{" "}
+              <TextButton onClick={() => setIsLogin(true)}>
                 Sign In
               </TextButton>
             </Text>
@@ -103,4 +130,5 @@ const Authentication = () => {
     </Container>
   );
 };
+
 export default Authentication;

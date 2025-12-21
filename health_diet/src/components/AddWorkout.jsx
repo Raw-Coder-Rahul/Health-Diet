@@ -3,9 +3,8 @@ import styled from "styled-components";
 import TextInput from "./TextInput";
 import Button from "./Button";
 import { toast } from "react-toastify";
-import { addWorkout } from "../api";
 import { useDispatch } from "react-redux";
-import { addWorkoutSuccess } from "../redux/reducers/workoutSlice";
+import { createWorkout } from "../redux/reducers/workoutSlice";
 
 const Card = styled.div`
   flex: 1;
@@ -54,19 +53,17 @@ const AddWorkout = ({ onWorkoutAdded }) => {
 
     try {
       setLoading(true);
-      const { data } = await addWorkout({
-        category: category.trim(),
-        workoutName: workoutName.trim(),
-        sets: form.sets ? Number(form.sets) : undefined,
-        reps: form.reps ? Number(form.reps) : undefined,
-        weight: form.weight ? Number(form.weight) : undefined,
-        duration: form.duration ? Number(form.duration) : undefined,
-        caloriesBurned: form.caloriesBurned
-          ? Number(form.caloriesBurned)
-          : undefined,
-      });
-
-      dispatch(addWorkoutSuccess(data));
+      await dispatch(
+        createWorkout({
+          category: category.trim(),
+          workoutName: workoutName.trim(),
+          sets: form.sets ? Number(form.sets) : undefined,
+          reps: form.reps ? Number(form.reps) : undefined,
+          weight: form.weight ? Number(form.weight) : undefined,
+          duration: form.duration ? Number(form.duration) : undefined,
+          caloriesBurned: form.caloriesBurned ? Number(form.caloriesBurned) : undefined,
+        })
+      ).unwrap();
 
       toast.success("Workout Added!");
       setForm({
@@ -79,9 +76,9 @@ const AddWorkout = ({ onWorkoutAdded }) => {
         caloriesBurned: "",
       });
 
-      if (onWorkoutAdded) onWorkoutAdded(); 
+      if (onWorkoutAdded) onWorkoutAdded();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Error adding workout");
+      toast.error(err || "Error adding workout");
     } finally {
       setLoading(false);
     }
@@ -91,55 +88,13 @@ const AddWorkout = ({ onWorkoutAdded }) => {
     <Card>
       <Title>Add New Workout</Title>
 
-      <TextInput
-        label="Category"
-        placeholder="e.g. Hands"
-        value={form.category}
-        name="category"
-        handleChange={handleChange}
-      />
-      <TextInput
-        label="Workout Name"
-        placeholder="e.g. Push Up"
-        value={form.workoutName}
-        name="workoutName"
-        handleChange={handleChange}
-      />
-      <TextInput
-        label="Sets"
-        type="number"
-        value={form.sets}
-        name="sets"
-        handleChange={handleChange}
-      />
-      <TextInput
-        label="Reps"
-        type="number"
-        value={form.reps}
-        name="reps"
-        handleChange={handleChange}
-      />
-      <TextInput
-        label="Weight (kg)"
-        type="number"
-        value={form.weight}
-        name="weight"
-        handleChange={handleChange}
-      />
-      <TextInput
-        label="Duration (min)"
-        type="number"
-        value={form.duration}
-        name="duration"
-        handleChange={handleChange}
-      />
-      <TextInput
-        label="Calories Burned (optional)"
-        type="number"
-        value={form.caloriesBurned}
-        name="caloriesBurned"
-        handleChange={handleChange}
-      />
+      <TextInput label="Category" placeholder="e.g. Body" value={form.category} name="category" handleChange={handleChange} />
+      <TextInput label="Workout Name" placeholder="e.g. Side Plunk" value={form.workoutName} name="workoutName" handleChange={handleChange} />
+      <TextInput label="Sets" placeholder="e.g. 4" type="number" value={form.sets} name="sets" handleChange={handleChange} />
+      <TextInput label="Reps" placeholder="e.g. 7" type="number" value={form.reps} name="reps" handleChange={handleChange} />
+      <TextInput label="Loss Weight (kg)" placeholder="e.g. 15" type="number" value={form.weight} name="weight" handleChange={handleChange} />
+      <TextInput label="Duration (min)" placeholder="e.g. 15" type="number" value={form.duration} name="duration" handleChange={handleChange} />
+      <TextInput label="Calories Burned (optional)" type="number" value={form.caloriesBurned} name="caloriesBurned" handleChange={handleChange} />
 
       <Button
         primary
