@@ -4,7 +4,8 @@ import { logout } from "../redux/reducers/userSlice";
 import { history } from "../utills/navigation";
 
 const API = axios.create({
-  baseURL: "http://localhost:5047/api/",
+  // baseURL: "http://localhost:5047/api/",
+  baseURL: "https://health-diet-backend.onrender.com",
 });
 
 API.interceptors.request.use((config) => {
