@@ -5,7 +5,7 @@ import { history } from "../utills/navigation";
 
 const API = axios.create({
   // baseURL: "http://localhost:5047/api/",
-  baseURL: "https://health-diet-backend.onrender.com/api",
+  baseURL: "https://health-diet-backend.onrender.com/api/",
 });
 
 API.interceptors.request.use((config) => {
